@@ -1,0 +1,68 @@
+{
+    "_comment": "llama.cpp Preset 模板集合 — 放入模型目录作为 preset.json",
+    "_priority": "preset.json > Router 全局启动参数",
+
+    "templates": {
+        "small_model_32k": {
+            "description": "小模型（0.8B–3B）长文本配置",
+            "ctx_size": 32768,
+            "n_gpu_layers": 99,
+            "n_threads": 16,
+            "n_threads_batch": 16,
+            "flash_attn": true
+        },
+
+        "tiny_model_64k": {
+            "description": "超小模型（0.8B）超长文本配置",
+            "ctx_size": 65536,
+            "n_gpu_layers": 99,
+            "n_threads": 16,
+            "flash_attn": true
+        },
+
+        "large_model_default": {
+            "description": "大模型（≥12B）无需创建 preset.json，自动继承全局 -c 8192",
+            "_note": "不要创建此文件，让模型继承全局参数"
+        },
+
+        "cpu_phi4_32k": {
+            "description": "Phi-4-mini CPU 9GB 内存安全模式",
+            "ctx_size": 32768,
+            "n_threads": 16,
+            "n_threads_batch": 16,
+            "batch_size": 256,
+            "cache_type_k": "q4_0",
+            "cache_type_v": "q4_0",
+            "flash_attn": true,
+            "no_metrics": true
+        },
+
+        "embedding_model": {
+            "description": "Embedding 模型专用配置",
+            "embedding": true,
+            "pooling": "mean",
+            "n_gpu_layers": 0
+        },
+
+        "qwen3_thinking_off": {
+            "description": "Qwen3 关闭思考模式",
+            "chat_template_kwargs": {
+                "enable_thinking": false
+            },
+            "temp": 0.7,
+            "top_p": 0.8,
+            "top_k": 20,
+            "repeat_penalty": 1.05
+        },
+
+        "large_model_32b_cpu": {
+            "description": "32B 模型 CPU 推理（48GB 内存）",
+            "n_gpu_layers": 0,
+            "n_threads": 16,
+            "ctx_size": 16384,
+            "cache_type_k": "q4_0",
+            "cache_type_v": "q4_0",
+            "defrag_thresh": 0.3
+        }
+    }
+}
