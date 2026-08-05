@@ -1,13 +1,13 @@
 ---
 name: llama-cpp-windows-deployment
-description: 'llama.cpp Windows 平台多模型部署与优化。涵盖：Router Mode 多模型管理、Gemma 4/Qwen/Phi-4 模型部署、QAT–MTP 推理优化、RTX 5060 Ti 16GB 显存调优、CPU 内存受限场景适配、预编译包快速部署、Preset 差异化配置、WSL2 通路配置、Agent/API 接入。Use when: 部署 llama.cpp 服务、配置多模型路由、优化推理性能、排查显存/内存溢出、配置 MTP 投机解码、迁移 Qwen/Gemma 模型。English: deploying llama.cpp on Windows, configuring Router Mode, optimizing GPU/CPU inference, troubleshooting OOM, setting up MTP speculative decoding, migrating between Gemma 4 and Qwen models.'
+description: 'llama.cpp Windows 平台多模型部署与优化。涵盖：Router Mode 多模型管理、Gemma 4/Qwen/Phi-4 模型部署、QAT–MTP 推理优化、RTX 5060 Ti 16GB 显存调优、CPU 内存受限场景适配、预编译包快速部署、Preset 差异化配置、WSL2 通路配置、Agent/API 接入、Tool Calling 工具调用测试、纯 CPU 工具调用脚本、BAT 脚本编码修复。Use when: 部署 llama.cpp 服务、配置多模型路由、优化推理性能、排查显存/内存溢出、配置 MTP 投机解码、迁移 Qwen/Gemma 模型、测试模型工具调用、搭建纯 CPU 推理、修复 .bat 闪退/乱码。English: deploying llama.cpp on Windows, configuring Router Mode, optimizing GPU/CPU inference, troubleshooting OOM, setting up MTP speculative decoding, migrating between Gemma 4 and Qwen models, testing tool calling, running CPU-only inference, fixing .bat encoding crashes.'
 argument-hint: '描述你的部署场景：硬件配置、目标模型、显存大小、是否使用 Router Mode / MTP'
 user-invocable: true
 ---
 
 # llama.cpp Windows 多模型部署与优化集成技能
 
-> **版本**: v2.0 | **基准硬件**: RTX 5060 Ti 16GB + Intel U7 270K / CPU-only | **平台**: Windows 10/11 + WSL2 | **llama.cpp 版本**: b10056 – b10066+
+> **版本**: v3.0 | **基准硬件**: RTX 5060 Ti 16GB + Intel U7 270K / CPU-only (48GB DDR5) | **平台**: Windows 10/11 + WSL2 | **llama.cpp 版本**: b10056 – b10158+ | **更新**: 2026-08-05（新增 Tool Calling、纯 CPU 工具调用脚本、BAT 编码修复经验）
 
 ## 一、When to Use（触发词）
 
@@ -22,6 +22,9 @@ user-invocable: true
 | 环境搭建 | "预编译包", "Blackwell", "sm_120", "首次部署" |
 | WSL2 连接 | "WSL2", "宿主机访问", "NAT" |
 | Agent 对接 | "Hermes", "Claude Code", "Codex CLI", "LangChain" |
+| 工具调用 | "工具调用", "tool calling", "function calling", "--tools all", "--jinja" |
+| 纯 CPU 推理 | "CPU工具调用", "纯CPU", "CPU-only", "不占GPU", "128K" |
+| BAT 脚本 | "脚本闪退", "乱码", "GBK", "UTF-8", "编码" |
 
 ## 二、Prerequisites（前置条件）
 
@@ -35,14 +38,14 @@ user-invocable: true
 | OS | Windows 10 64-bit | Windows 11 24H2 |
 
 ### 2.2 软件要求
-- `llama.cpp` 预编译包（`llama-b9811+-bin-win-cuda-13.3-x64.zip`，Blackwell sm_120 原生支持）
+- `llama.cpp` 预编译包（`llama-b10056+-bin-win-cuda-13.3-x64.zip`，Blackwell sm_120 原生支持）
 - 模型文件：GGUF 格式（标准 / QAT-UD / MTP）
 - NVIDIA 驱动正常，`nvidia-smi` 可运行（GPU 场景）
 - PowerShell + CMD（BAT 脚本兼容）
 
 ### 2.3 目录规范
 ```
-<models-dir>\
+C:\models\
 ├─ chat\                          # Router Mode 扫描的对话模型目录
 │  ├─ gemma-4-12b-it-Q5_K_M\     # 无 preset.json → 继承全局参数
 │  │  └── model.gguf
@@ -73,6 +76,9 @@ user-invocable: true
 | **KV Cache** | 上下文 Key-Value 缓存，是显存/内存占用的主要变量。公式：`≈ 2 × ctx × layers × hidden_dim × precision_bytes` |
 | **Blackwell (sm_120)** | RTX 50 系架构，需 CUDA 13.3+ 驱动 ≥ 610.47 |
 | **子命令架构** | 新版 llama.cpp 用 `llama <子命令>` 结构，`llama-server` / `llama-cli` / `llama-embed` |
+| **Tool Calling 双层机制** | ①客户端 tools API（VS Code/Hermes 用，需 `--jinja`）②服务端内置 agent 工具 `--tools all`（Web UI 用）。**内置功能，无需安装** |
+| **Qwen3.6-27B 架构** | 64 层混合架构：48 层 Gated DeltaNet（线性注意力，KV 极小）+ 16 层 Gated Attention。权重是显存大头，KV 占比很小 |
+| **BAT 编码** | 中文 Windows cmd 按 GBK(936) 解码 .bat。UTF-8 中文会乱码→语法错误→闪退；`chcp 65001` 与 BOM 均无法修复解析问题 |
 
 ## 四、Deployment Workflow（部署工作流）
 
@@ -102,10 +108,10 @@ user-invocable: true
 @echo off
 chcp 65001 >nul
 title llama.cpp Router - RTX 5060 Ti
-cd /d <llama.cpp-dir>
+cd /d C:\llama.cpp
 
 llama-server.exe ^
-  --models-dir <models-dir>\chat ^
+  --models-dir C:\models\chat ^
   --host 0.0.0.0 ^
   --port 8080 ^
   -fa on ^
@@ -127,7 +133,7 @@ pause
 
 #### Preset 模板（放入模型目录）
 
-**小模型（0.8B–3B）长文本配置**：`<models-dir>\chat\<model-dir>\preset.json`
+**小模型（0.8B–3B）长文本配置**：`C:\models\chat\<model-dir>\preset.json`
 ```json
 {
     "ctx_size": 32768,
@@ -172,6 +178,7 @@ pause
 ```
 
 > ⚠️ **QAT-UD 与 MTP 不推荐同开**：QAT-UD 是多模态主（带 mmproj），MTP draft 是纯文本 arch，b10056 会因 arch 不对齐 silent skip。QAT-UD 走裸跑 + `--mmproj`。
+> 参考脚本 `gemma4-menu-scripts.bat` 菜单 7/9 保留 QAT+MTP 组合仅作实验入口（菜单已标注 `[!] QAT+MTP 不推荐`），正常使用请选 QAT 裸跑项（5/6）或非 QAT 的 MTP 项（1/2）。
 
 **26B-A4B MoE 特殊处理**：
 - `-ngld` 必须保守（40-50），防止主模型 OOM
@@ -207,9 +214,9 @@ pause
 @echo off
 chcp 65001 >nul
 title Phi-4-mini (CPU - 9GB Safe Mode)
-cd /d <llama.cpp-dir>
+cd /d C:\llama.cpp
 
-set "MODEL_DIR=<models-dir>\chat\Phi-4-mini-instruct-Q4_K_M"
+set "MODEL_DIR=C:\models\chat\Phi-4-mini-instruct-Q4_K_M"
 set "CTX_SIZE=32768"       :: 从 32K 起测，稳定后试 48K/64K
 set "BATCH_SIZE=256"
 set "THREADS=16"
@@ -237,7 +244,43 @@ pause
 
 > ⚠️ **BAT 注释提示**：行末 `::` 注释在 `if() (...)` 括号块内可能导致解析错误，如需在括号块内注释请改用 `REM` 语句。
 
-> 📎 **完整脚本参考**：[`./references/gemma4-menu-scripts.bat`](./references/gemma4-menu-scripts.bat)（Gemma 4 10 选项菜单）、[`./references/qwen-scripts.bat`](./references/qwen-scripts.bat)（Qwen 三档部署脚本）、[`./references/preset-templates.json`](./references/preset-templates.json)（各场景 Preset 模板集合）
+> 📎 **完整脚本参考**：[`./references/gemma4-menu-scripts.bat`](./references/gemma4-menu-scripts.bat)（Gemma 4 10 选项菜单）、[`./references/qwen-scripts.bat`](./references/qwen-scripts.bat)（Qwen 三档部署脚本）、[`./references/preset-templates.json`](./references/preset-templates.json)（各场景 Preset 模板集合）、[`./references/20260803-session-experience.md`](./references/20260803-session-experience.md)（全量实测数据与经验沉淀）
+
+#### 3D：Qwen3.6-27B 稠密模型专项（64K + 高 ngl 提速）⭐ 2026-08-03 实测
+
+**架构关键**：Qwen3.6-27B 实际是 **64 层**（48 层 Gated DeltaNet 线性注意力 + 16 层 Gated Attention）。KV 缓存极小（64K q8_0 仅 ~0.5GB），**权重才是显存大头**。
+
+**核心结论**：128K 配置在 16GB 显存下**必 OOM**；改 **64K + 更高 ngl** 反而更快：
+
+| 模型 | 旧配置 | 新配置 | 实测 tg | MTP 接受率 |
+|------|--------|--------|---------|-----------|
+| HauhauCS IQ4XS（裸跑） | ngl40/128K | **ngl52/64K** | **14.3 t/s** (+37%) | - |
+| MTP Q4_K_S | ngl40/128K | **ngl48/64K** + MTP | **15.5 t/s** (+24%) | 98.5% |
+| MTP IQ4XS | ngl40/128K | **ngl48/64K** + MTP | **16.9 t/s** (+25%) | 94.6% |
+| UD-Q4_K_XL（裸跑） | ngl40/128K | **ngl48/64K** | 10.9 t/s | - |
+
+**要点**：
+- ngl40 时 24 层在 CPU → 提升到 ngl48-52 后仅 12 层在 CPU，速度显著提升
+- 统一参数：`-c 65536 --cache-type-k/v q8_0 -t 12 --batch-size 256`
+- 27B MTP 实测健康度：`draft acceptance = 0.921` / `graphs reused = 15` / `mean len = 2.59` ✅
+- 对比：**Gemma 4 26B-A4B 是 MoE**（128 专家/8 活跃/4B active），解码每 token 只算 4B → 天然快 3-4 倍（55+ t/s），无需此优化
+
+#### 3E：纯 CPU 工具调用脚本（12B 以下，不占 GPU）
+
+菜单式一键脚本 `start-CPU-Toolcall-Launcher.bat`（端口 8086，脚本顶部 `PORT` 变量可改；[参考脚本](./references/start-CPU-Toolcall-Launcher.bat)），全部 `-ngl 0`、128K 上下文：
+
+| 模型 | KV | 实测 tg | 内存 | 工具调用 |
+|------|----|---------|------|---------|
+| Qwen3.5-2B (+mmproj) | q4_0 | **57.1 t/s** | ~4GB | ✅ |
+| Phi-4-mini | q4_0 | 38.3 t/s | 7.4GB | ❌ 不支持 |
+| gemma-4-E4B (+mmproj) | q8_0 | 29.8 t/s | ~6GB | ✅ |
+| gemma-4-12B-QAT (+mmproj) | q8_0 | 13.0 t/s | ~6GB | ✅ |
+
+**CPU 参数要点**：
+- `-ngl 0` 强制不占 GPU（可用 `nvidia-smi` 验证无 llama 进程）
+- `--cache-type-k/v q4_0`（fast 档）或 `q8_0`（quality 档）
+- `-t <物理核数>`、`--batch-size 256` 降低内存峰值
+- 菜单标题直接标注实测速度（`[57 t/s]`）与能力（`[!] NO tool calls`），便于用户选型
 
 ### Step 4：安全配置（WSL2 + Agent 对接）
 
@@ -261,6 +304,39 @@ llm = ChatOpenAI(
     model="Qwen3.5-2B-Q4_K_M",
 )
 ```
+
+### Step 5：Tool Calling 工具调用（内置，无需安装）⭐ 2026-08-03 实测
+
+**llama.cpp 工具调用是内置功能，无需安装任何额外 tools**。存在两套完全独立的机制：
+
+| | **客户端 tools API**（VS Code / Hermes 用） | **服务端内置工具 `--tools all`**（Web UI 用） |
+|---|---|---|
+| 谁定义工具 | 客户端在请求体 `tools` 数组定义 | 服务端内置 read_file/grep_search/exec_shell_command/write_file/edit_file/get_datetime |
+| 谁执行工具 | 客户端执行后回传 tool 消息 | 服务端 `/tools` REST 端点执行 |
+| 前置条件 | 服务端 `--jinja` + 模型支持 | 启动参数 `--tools all`（需配合 `--jinja`） |
+| 依赖关系 | **不依赖** `--tools all` | 独立 |
+
+**关键结论（实测验证）**：
+- 通过 **OpenAI API 连 VS Code 或 WSL2 Hermes：不需要 `--tools all`**，工具由客户端自己驱动，无需额外参数
+- `--tools all` 仅给 Web UI / 服务端 agent 场景使用
+- 脚本配置方式：
+```bat
+set "AGENT_TOOLS=off"   :: off=关闭(默认) | all=启用全部内置工具
+if "%AGENT_TOOLS%"=="all" ( set "TOOLS_ARG=--tools all" ) else ( set "TOOLS_ARG=" )
+```
+
+**工具调用测试方案（11/11 模型全部 PASS，b10158）**：
+- Phase 1 能力探测：发带 `tools` 的请求，确认模型返回 tool_call
+- Phase 2 两轮工具循环：调用 → 客户端执行 → 回传结果 → 模型基于结果继续作答
+- 测试工具示例：`get_current_weather {"location":"Beijing"}` → 26°C 晴朗 ✅
+- ⚠️ **Phi-4-mini 不支持工具调用**（实测确认）
+
+### Step 6：启动脚本工程化经验（2026-08-03/04 实战沉淀）
+
+- **备份先行**：任何脚本修改前先复制到 `backup\`（如 `start-Gemma4-Launcher-WSL.bat.bak-20260803`），确认字节数一致再改动，可随时回滚
+- **按模型族拆分脚本**：Gemma 专用 / Qwen 专用 / CPU 工具调用专用，端口独立（默认 8080 / 8083 / 8086，脚本顶部 `PORT` 变量可改，与现有服务冲突时调整）
+- **菜单标注**：实测速度标注到标题后（`[57 t/s]`）、破限模型特殊标注、不同 B 参数量化版写清（如 12B-Q5_K_M）
+- **编码选择**：见 Troubleshooting「脚本闪退」——新脚本推荐 UTF-8 + 全英文；既有 GBK 脚本保留并在编辑器中手动选 GBK
 
 ## 五、Parameter Dictionary（参数词典）
 
@@ -287,7 +363,7 @@ llm = ChatOpenAI(
 
 **实测参考**（Q5 + Q8 draft）：`A=0.549 / L=2.10 / n-max=2 / R=283` → ✅ 全线绿。
 
-> 🔧 **自动化诊断**：运行 [`./scripts/detect.ps1`](./scripts/detect.ps1) 一键检测 CUDA 架构、MTP 指纹、驱动版本、模型文件和显存状态。
+> 🔧 **自动化诊断**：运行 [`./scripts/detect.ps1`](./scripts/detect.ps1)（Windows 原生 PowerShell）或 [`./scripts/detect.py`](./scripts/detect.py)（跨平台 Python，Windows/Linux/macOS 通用，Python 3.7+）一键检测 CUDA 架构、MTP 指纹、驱动版本、模型文件和显存状态。两者功能一致，改动时需同步。
 
 <details>
 <summary>🔀 跨模型族迁移检查清单（点击展开）</summary>
@@ -297,7 +373,7 @@ llm = ChatOpenAI(
 | `--model-draft` | ✅ 必写 | 外挂时才写 | ❌ 删除 |
 | `--gpu-layers-draft` | ✅ 写（控显存） | 外挂时才写 | ❌ 删除 |
 | `--spec-type` | `draft-mtp` | `draft` | `draft-mtp` |
-| 采样参数 | temp=1.0 / top_p=0.9 | temp=0.7 / top_p=0.8 / top_k=20 | temp=0.7 / top_p=0.8 / top_k=20 |
+| 采样参数 | temp=0.7 / top_p=0.9 | temp=0.7 / top_p=0.8 / top_k=20 | temp=0.7 / top_p=0.8 / top_k=20 |
 | `--chat-template-kwargs` | 不需要 | `{"enable_thinking":false}` | `{"enable_thinking":false}` |
 | KV Cache | q8_0/q8_0（QAT 敏感） | q8_0/q8_0 | q8_0/q8_0（拉 64K 可降 q4_0） |
 | ctx 上限 (16GB) | 12B=64K / 26B-A4B=32K | 48K–64K | 32K |
@@ -320,6 +396,14 @@ llm = ChatOpenAI(
 | 26B 加载 OOM | `-ngld` 过高 / ctx 过大 | 降 `-ngld` 到 40-50，ctx 限制 32K |
 | 26B MTP `acceptance` 极低 | 用了 12B 的 draft | 换 A4B 专用 MTP GGUF |
 | Phi-4 64K OOM | KV Cache 超 9GB | 降 KV 到 q4_0，从 32K 逐步测试 |
+| 脚本双击闪退（中文乱码） | UTF-8 中文被 cmd 按 GBK 解码，残留 ASCII 特殊字符被误解释（如 `ll=启用(默认) | off=关闭` 被拆成命令） | 方案 A：转 GBK 编码 + 删 `chcp 65001` + 去 emoji；方案 B（推荐新脚本）：UTF-8 + 全英文界面 |
+| `chcp 65001` / UTF-8 BOM 无法修复闪退 | 只影响控制台显示，cmd 解析文件内容时不用它 | 不要依赖，直接改文件编码 |
+| `nvidia-smi ... --format=csv,noheader` 报 noheader 不被识别 | cmd 中**逗号是参数分隔符**，`--format=csv,noheader` 被拆成 3 个参数（PowerShell 调用则无此问题） | bat 中加引号：`--format="csv,noheader,nounits"` |
+| GBK 文件在 VS Code 显示乱码 | VS Code 默认按 UTF-8 打开 | 编辑器右下角手动选 GBK；或改用方案 B 全英文 UTF-8 |
+| 128K 上下文加载崩溃 | 16GB 显存下权重 + 128K KV 超限 | 降 64K + 提 ngl（27B 实测反而更快） |
+| 模型不支持工具调用 | 模型能力限制（如 Phi-4-mini） | 换支持模型；菜单标注 `[!] NO tool calls` |
+
+**参考脚本编码现状说明（2026-08-05 修订）**：`references/gemma4-menu-scripts.bat`、`qwen-scripts.bat`、`start-CPU-Toolcall-Launcher.bat` 已统一为 **UTF-8 + 全英文（纯 ASCII）+ 无 chcp**，任意 Windows cmd 可直接运行无乱码（方案 B）。实测教训：UTF-8 中文注释 + `chcp 65001` 的混合脚本在中文 Windows cmd 下会被 GBK 误解析导致命令错乱（如 `llama-server.exe` 被截断成 `erver.exe` 报错），因此参考脚本不再使用中文。用户自建脚本若需中文界面，请用方案 A（GBK 编码 + 删 chcp + 去 emoji）。
 
 ## 八、Version Upgrade Notes（版本升级说明）
 
@@ -327,19 +411,34 @@ llm = ChatOpenAI(
 |---------|---------------|------|
 | b10070+ | `--verbose-prefill` | 验证 MTP Prefill 生效 |
 | b10070+ | `--defrag-thresh 0.1` | 优化长对话 KV Cache 碎片 |
-| 迁移到 `--draft-*` 命名 | `--draft-model`, `--draft-mtp-n` | Qwen3.6 线已迁，Gemma 4 线未迁 |
+| 迁移到 `--draft-*` 命名 | 见下方「spec→draft 映射表」 | 参考脚本默认按 b10056 `--spec-*` 编写；新版 build 检测到 `--draft-*` 后按映射表切换 |
+| b10158+ | `--jinja` / `--tools all` | 工具调用内置功能；`--tools all` 需配合 `--jinja` |
+
+#### spec→draft 参数映射表（build 迁移到 `--draft-*` 命名时）
+
+| 当前（b10056 `--spec-*`） | 新版（`--draft-*`） | 说明 |
+|---|---|---|
+| `--spec-type draft-mtp` | `--draft-type mtp` | 投机解码类型 |
+| `--spec-draft-n-max N` | `--draft-mtp-n N` | 最大预测 token 数 |
+| `--gpu-layers-draft L` | `--draft-mtp-ngl L` | Draft 层数 |
+| `--model-draft <path>` | `--draft-model <path>` | 外挂 Draft 模型 |
+
+> 迁移后用 `llama-server.exe --help` 验证新参数存在（Step 1 指纹检测），并在日志确认 `draft acceptance` 健康。
 
 ## 九、Verification Checklist（验证清单）
 
-部署完成后，Agent 自动校验以下五项：
+部署完成后，Agent 自动校验以下八项：
 
 - [ ] **ctx 数值验证**：日志 `n_ctx_slot = <目标值>`（128K→`131072` / 64K→`65536` / 32K→`32768`）
 - [ ] **推理速度**：`tg ≥ 60 t/s`（12B 标准）/ `tg ≥ 85 t/s`（12B QAT 128K）/ `tg ≥ 1500 t/s prompt`（26B）
 - [ ] **MTP 健康**：`draft acceptance > 0.5`（如适用）
 - [ ] **WSL2 连通**：`curl http://<宿主机IP>:<port>/health` → `{"status":"ok"}`
 - [ ] **安全配置**：无 API Key → `401`；跨域仅允许配置来源
+- [ ] **工具调用**：Phase 1 探测 + Phase 2 两轮工具循环（如适用；Phi-4-mini 预期不支持）
+- [ ] **脚本可启动**：双击 .bat 不闪退（中文 Windows 注意编码，见 Troubleshooting）
+- [ ] **CPU 模式**：`-ngl 0` 时 `nvidia-smi` 无 llama 进程（确认不占 GPU）
 
 ---
 
 **Skill End**
-Agent 执行完成后应输出《部署验证报告》，包含以上五项指标及模型加载状态。
+Agent 执行完成后应输出《部署验证报告》，包含以上八项指标及模型加载状态。

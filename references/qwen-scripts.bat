@@ -1,19 +1,26 @@
 @echo off
 :: ============================================================
-:: Qwen 系列部署脚本 — 引用自 SKILL.md Step 3B
-:: 包含三档脚本变体，按需取消注释使用
-:: 依赖: llama-server.exe 在工作目录或 PATH 中
+:: Qwen deployment scripts - reference from SKILL.md Step 3B
+:: Three variants (B-1/B-2/B-3), uncomment as needed
+:: Requires: llama-server.exe in cwd or PATH
 :: ============================================================
-chcp 65001 >nul
-cd /d %LLAMA_CPP_DIR%
+
+:: ========== Generic config (edit for your machine) ==========
+:: Change these variables to adapt to any machine
+set "LLAMA_DIR=C:\llama.cpp"
+set "CHAT=C:\models\chat"
+:: Port: change if conflicting (8083 Qwen default)
+set "PORT=8083"
+set "API_KEY=sk-local-qwen30b"
+cd /d "%LLAMA_DIR%"
 
 :: ============================================================
-:: 脚本 B-1：Qwen3-30B-A3B 裸跑（无 MTP，最稳档）
-:: MoE 30.5B/3.3B active, 无 MTP heads
+:: Script B-1: Qwen3-30B-A3B bare run (no MTP, most stable)
+:: MoE 30.5B/3.3B active, no MTP heads
 :: ============================================================
 :RUN_QWEN30B_BARE
 echo [B-1] Qwen3-30B-A3B bare run, ctx=48K
-set "MAIN=%MODELS_CHAT_DIR%\Qwen3-30B-A3B\Qwen3-30B-A3B-Q4_K_XL.gguf"
+set "MAIN=%CHAT%\Qwen3-30B-A3B\Qwen3-30B-A3B-Q4_K_XL.gguf"
 
 llama-server.exe ^
   -m "%MAIN%" ^
@@ -27,8 +34,8 @@ llama-server.exe ^
   --cache-type-v q8_0 ^
   --no-mmap ^
   --host 0.0.0.0 ^
-  --port 8083 ^
-  --api-key sk-local-qwen30b ^
+  --port %PORT% ^
+  --api-key %API_KEY% ^
   --chat-template-kwargs "{\"enable_thinking\":false}" ^
   --temp 0.7 ^
   --top-p 0.8 ^
@@ -40,13 +47,13 @@ pause
 goto :eof
 
 :: ============================================================
-:: 脚本 B-2：Qwen3-30B-A3B + 外挂小 draft（投机解码）
-:: --spec-type draft（非 draft-mtp），外挂 Qwen3-8B Q8_0
+:: Script B-2: Qwen3-30B-A3B + external small draft (speculative)
+:: --spec-type draft (not draft-mtp), external Qwen3-8B Q8_0
 :: ============================================================
 :RUN_QWEN30B_DRAFT
 echo [B-2] Qwen3-30B-A3B + external draft (speculative)
-set "MAIN=%MODELS_CHAT_DIR%\Qwen3-30B-A3B\Qwen3-30B-A3B-Q4_K_XL.gguf"
-set "DRAFT=%MODELS_CHAT_DIR%\Qwen3-8B\Qwen3-8B-Q8_0.gguf"
+set "MAIN=%CHAT%\Qwen3-30B-A3B\Qwen3-30B-A3B-Q4_K_XL.gguf"
+set "DRAFT=%CHAT%\Qwen3-8B\Qwen3-8B-Q8_0.gguf"
 
 llama-server.exe ^
   -m "%MAIN%" ^
@@ -63,8 +70,8 @@ llama-server.exe ^
   --cache-type-v q8_0 ^
   --no-mmap ^
   --host 0.0.0.0 ^
-  --port 8083 ^
-  --api-key sk-local-qwen30b ^
+  --port %PORT% ^
+  --api-key %API_KEY% ^
   --chat-template-kwargs "{\"enable_thinking\":false}" ^
   --temp 0.7 ^
   --top-p 0.8 ^
@@ -76,12 +83,12 @@ pause
 goto :eof
 
 :: ============================================================
-:: 脚本 B-3：Qwen3.6-35B-A3B-MTP（内置 heads）
-:: 注意：无 --model-draft、无 --gpu-layers-draft
+:: Script B-3: Qwen3.6-35B-A3B-MTP (built-in heads)
+:: Note: no --model-draft, no --gpu-layers-draft
 :: ============================================================
 :RUN_QWEN35B_MTP
 echo [B-3] Qwen3.6-35B-A3B-MTP (built-in MTP heads)
-set "MAIN=%MODELS_CHAT_DIR%\Qwen3.6-35B-A3B-MTP-GGUF\Qwen3.6-35B-A3B-MTP-UD-Q4_K_XL.gguf"
+set "MAIN=%CHAT%\Qwen3.6-35B-A3B-MTP-GGUF\Qwen3.6-35B-A3B-MTP-UD-Q4_K_XL.gguf"
 
 llama-server.exe ^
   -m "%MAIN%" ^
@@ -97,8 +104,8 @@ llama-server.exe ^
   --cache-type-v q8_0 ^
   --no-mmap ^
   --host 0.0.0.0 ^
-  --port 8083 ^
-  --api-key sk-local-qwen35b-mtp ^
+  --port %PORT% ^
+  --api-key %API_KEY% ^
   --chat-template-kwargs "{\"enable_thinking\":false}" ^
   --temp 0.7 ^
   --top-p 0.8 ^

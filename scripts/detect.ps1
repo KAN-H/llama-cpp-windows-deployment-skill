@@ -5,17 +5,22 @@
     一键检测 CUDA 架构、MTP 参数指纹、驱动版本、模型文件状态和显存，
     输出诊断报告供 Agent 或用户参考。
 .PARAMETER llamaDir
-    llama.cpp 工作目录路径，默认为 <llama.cpp-dir>
+    llama.cpp 工作目录路径，默认为 C:\llama.cpp
 .PARAMETER modelsDir
-    模型存放目录路径，默认为 <models-dir>
+    模型存放目录路径，默认为 C:\models
 .EXAMPLE
     .\detect.ps1
     .\detect.ps1 -llamaDir "C:\llama.cpp" -modelsDir "D:\models"
+.NOTES
+    编码说明：本脚本为 UTF-8 无 BOM + 中文/emoji 输出。Windows PowerShell 5.1
+    默认按 ANSI(GBK) 读取无 BOM 文件，中文与 emoji 可能乱码。建议使用 PowerShell 7+
+    （默认 UTF-8）运行；或在 PS 5.1 中先执行
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 再运行。
 #>
 
 param(
-    [string]$llamaDir = "<llama.cpp-dir>",
-    [string]$modelsDir = "<models-dir>"
+    [string]$llamaDir = "C:\llama.cpp",
+    [string]$modelsDir = "C:\models"
 )
 
 $results = @{}
@@ -111,7 +116,11 @@ if (Test-Path $svr) {
         Write-Host "⚠️ --draft-* 命名 (较新 build)" -ForegroundColor Yellow
         $results["MTP_Fingerprint"] = "draft-* (newer build)"
         Write-Host "      本技能 MTP 参数需切换到 --draft-* 命名"
-        Write-Host "      参考: --draft-model / --draft-mtp-n / --draft-mtp-buffer"
+        Write-Host "      spec→draft 映射:"
+        Write-Host "        --spec-type         → --draft-type"
+        Write-Host "        --spec-draft-n-max → --draft-mtp-n"
+        Write-Host "        --gpu-layers-draft → --draft-mtp-ngl"
+        Write-Host "        --model-draft      → --draft-model"
     } else {
         Write-Host "❌ 无法识别 MTP 参数" -ForegroundColor Red
         $results["MTP_Fingerprint"] = "Unknown"

@@ -10,11 +10,15 @@
 
 | File | Description |
 |------|-------------|
-| [`SKILL.md`](./SKILL.md) | Main skill file — activated by Agent on demand |
+| [`SKILL.md`](./SKILL.md) | Main skill file — activated by Agent on demand (v3.0) |
 | [`references/gemma4-menu-scripts.bat`](./references/gemma4-menu-scripts.bat) | Full 10-option Gemma 4 launch menu (Q5/Q8, QAT, MTP, 26B-A4B) |
 | [`references/qwen-scripts.bat`](./references/qwen-scripts.bat) | Qwen 3-tier deployment scripts (bare / external draft / built-in MTP) |
 | [`references/preset-templates.json`](./references/preset-templates.json) | Preset templates for 7 deployment scenarios |
-| [`scripts/detect.ps1`](./scripts/detect.ps1) | Automated environment diagnostics (CUDA arch, MTP fingerprint, driver, models, VRAM) |
+| [`references/start-CPU-Toolcall-Launcher.bat`](./references/start-CPU-Toolcall-Launcher.bat) | CPU-only tool-calling launcher (12B below, `-ngl 0`, 128K ctx) |
+| [`references/20260803-session-experience.md`](./references/20260803-session-experience.md) | Benchmark data: Qwen3.6-27B 64K tuning, CPU toolcall, 11/11 tool matrix, BAT encoding |
+| [`references/20260805-session-experience.md`](./references/20260805-session-experience.md) | Reasoning control (anti-deadloop, `--reasoning-budget`) & GBK safe editing |
+| [`scripts/detect.ps1`](./scripts/detect.ps1) | Automated environment diagnostics (PowerShell) |
+| [`scripts/detect.py`](./scripts/detect.py) | Cross-platform diagnostics (Python 3.7+, Windows/Linux/macOS) |
 
 ## 🎯 When to Use
 
@@ -29,7 +33,7 @@
 ## 🧰 Prerequisites
 
 - **Windows 10/11** (64-bit) with or without WSL2
-- **llama.cpp** precompiled package (`b10056 – b10066+`)
+- **llama.cpp** precompiled package (`b10056 – b10158+`)
 - **NVIDIA GPU** with driver ≥ 610.47 (for GPU offloading)
 - **GGUF models** — standard, QAT-UD, or MTP variants
 - **PowerShell + CMD** environment
