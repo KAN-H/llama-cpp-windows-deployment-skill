@@ -43,10 +43,13 @@ set "MM_26B=%CHAT%\gemma-4-26B-A4B-it-qat-UD-Q4_K_XL\mmproj-F16.gguf"
 :: Draft paths (adjust to actual downloads)
 set "D12_Q4=%MTP%\mtp-gemma-4-12b-it-Q4_0.gguf"
 set "D12_Q8=%MTP%\mtp-gemma-4-12b-it-Q8_0.gguf"
-set "D26_Q4=%MTP%\mtp-gemma-4-26B-A4B-it-Q4_0.gguf"
+:: NOTE 2026-08-06: official 26B MTP drafter ships Q8_0/BF16/F16 only (NO Q4_0).
+:: Third-party Q4_0 draft fails in llama-server with "invalid vector subscript"
+:: (loads fine in llama-cli - only a server load test is conclusive).
+set "D26_Q4=%MTP%\mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 set "D26_Q8=%MTP%\mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 
-set "DRAFT_TYPE=q4"
+set "DRAFT_TYPE=q8"
 if "%DRAFT_TYPE%"=="q4" ( set "D12=%D12_Q4%" & set "D26=%D26_Q4%"
 ) else ( set "D12=%D12_Q8%" & set "D26=%D26_Q8%" )
 
