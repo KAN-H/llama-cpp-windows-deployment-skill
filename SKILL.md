@@ -7,7 +7,7 @@ user-invocable: true
 
 # llama.cpp Windows 多模型部署与优化集成技能
 
-> **版本**: v3.0 | **基准硬件**: RTX 5060 Ti 16GB + Intel U7 270K / CPU-only (48GB DDR5) | **平台**: Windows 10/11 + WSL2 | **llama.cpp 版本**: b10056 – b10158+ | **更新**: 2026-08-05（新增 Tool Calling、纯 CPU 工具调用脚本、BAT 编码修复经验）
+> **版本**: v3.2 | **基准硬件**: RTX 5060 Ti 16GB + Intel U7 270K / CPU-only (48GB DDR5) | **平台**: Windows 10/11 + WSL2 | **llama.cpp 版本**: b10056 – b10158+ | **更新**: 2026-08-16（新增 `--fit` 自动显存分层实测、CPU 工具调用新模型、参数知识库与启动脚本自动同步方法论、Router Mode 参考脚本）
 
 ## 一、When to Use（触发词）
 
@@ -145,6 +145,8 @@ pause
 
 **大模型（≥12B）无需创建 preset.json**，继承全局参数。
 
+> 📎 **Router Mode 参考脚本**：[`./references/router-mode-preset.bat`](./references/router-mode-preset.bat)（`--models-preset` 版，最贴合 preset 优先级设计）、[`./references/router-mode-simple.bat`](./references/router-mode-simple.bat)（`--models-dir` 简单版）。两者均为 ASCII 通用模板，改顶部 `LLAMA_DIR`/`MODELS_DIR`/`PORT` 即可。
+
 #### 模式 B：单模型实例（专用端口）
 
 适用于需要独占 GPU 资源的高负载场景，每个模型开独立端口。
@@ -160,7 +162,7 @@ pause
 | 12B Q5_K_M | 标准 | ~8.5 GB | 64K ✅ | 32K ✅ | 日常首选 |
 | 12B UD-Q8_K_XL | UD imatrix | ~13 GB | 64K ✅ | ❌ 16GB 扛不住 | 高质量基线 |
 | 12B qat-UD-Q4_K_XL | QAT+UD | ~6.7 GB | 128K ✅ | ❌ arch 不对齐 | 多模态 + mmproj |
-| 26B-A4B qat-UD-Q4_K_XL | MoE A4B | ~10.5 GB | 32K | 需专用 A4B draft | ModelScope 专页 |
+| 26B-A4B qat-UD-Q4_K_XL | MoE A4B | ~10.5 GB | 128K ✅（官方甜点，SWA 小 KV） | 需专用 A4B draft（官方 Q8_0） | 16GB 下优先 `--fit on` |
 
 **核心参数（所有 Gemma 4 共用）**：
 ```bat
@@ -180,10 +182,11 @@ pause
 > ⚠️ **QAT-UD 与 MTP 不推荐同开**：QAT-UD 是多模态主（带 mmproj），MTP draft 是纯文本 arch，b10056 会因 arch 不对齐 silent skip。QAT-UD 走裸跑 + `--mmproj`。
 > 参考脚本 `gemma4-menu-scripts.bat` 菜单 7/9 保留 QAT+MTP 组合仅作实验入口（菜单已标注 `[!] QAT+MTP 不推荐`），正常使用请选 QAT 裸跑项（5/6）或非 QAT 的 MTP 项（1/2）。
 
-**26B-A4B MoE 特殊处理**：
-- `-ngld` 必须保守（40-50），防止主模型 OOM
-- MTP draft 必须用 **A4B 专用** GGUF（不可复用 12B draft）
-- Context 限制在 32K（拉 64K 需降 KV 到 q4_0）
+**26B-A4B MoE 特殊处理（2026-08-16 更新）**：
+- ⭐ **优先用 `--fit on --fit-ctx <ctx>` 让 llama.cpp 自动分层**（本 build fit 默认 on，但 `-ngl` 被显式设置时会 abort）。实测：16GB 下 51K 上下文从硬编码 ngl 的 10.6 t/s 提升到 72-93 t/s（~7 倍），根因是显存临界导致 CUDA graph 回退（详见 `references/20260816-session-experience.md`）
+- 手工 `-ngld`（40-50）作为 fit 不可用时的后备方案
+- MTP draft 必须用 **A4B 专用** GGUF（不可复用 12B draft），且只认官方 Q8_0（第三方 Q4_0 在 server 加载路径必崩）
+- Context：**128K 是官方甜点**（ctx_train=262144、MRCR 128K=44.1%）；SWA 使 KV 随 ctx 增长极小（128K 仅 ~1.0GB）
 
 #### 3B：Qwen 系列迁移
 
@@ -275,12 +278,22 @@ pause
 | Phi-4-mini | q4_0 | 38.3 t/s | 7.4GB | ❌ 不支持 |
 | gemma-4-E4B (+mmproj) | q8_0 | 29.8 t/s | ~6GB | ✅ |
 | gemma-4-12B-QAT (+mmproj) | q8_0 | 13.0 t/s | ~6GB | ✅ |
+| Qwen3.5-4B-UD (+mmproj) | q8_0 | 13.46 t/s | ~7GB | ✅ |
+| QwenPaw-Flash-9B-heretic-MTP | q8_0 | 27.3 t/s（CPU 上 MTP +74%） | ~2GB KV | ✅ |
+| QwenPaw-Flash-9B | q8_0 | 15.7 t/s | ~2GB KV | ✅ |
+| LFM2.5-8B-A1B-UD (MoE) | q8_0 | 44.1 t/s（同档最快） | ~0.8GB KV | ✅ |
 
 **CPU 参数要点**：
 - `-ngl 0` 强制不占 GPU（可用 `nvidia-smi` 验证无 llama 进程）
 - `--cache-type-k/v q4_0`（fast 档）或 `q8_0`（quality 档）
 - `-t <物理核数>`、`--batch-size 256` 降低内存峰值
 - 菜单标题直接标注实测速度（`[57 t/s]`）与能力（`[!] NO tool calls`），便于用户选型
+
+**新增模型已知问题（2026-08-16）**：
+- ⚠️ **LFM2.5 工具调用**：llama.cpp issue #26658——工具参数含引号/转义可能解析失败（规避：要求双引号无转义）
+- ⚠️ **llama-cli 单次测试必须加 `-st`（--single-turn）**：`-no-cnv` 在 b10158 仍进交互模式等 stdin，用管道/`Select-Object` 时看似卡死（实为等输入），勿误判为 hang
+- ✅ **MTP 在 CPU 上实测生效**：QwenPaw-heretic-MTP 27.3 vs 非 MTP 15.7 t/s（+74%），`draft acceptance = 0.725`；内置 MTP head 模型**不要**传 `--model-draft`
+- 完整实测见 [`./references/20260816-session-experience.md`](./references/20260816-session-experience.md)
 
 ### Step 4：安全配置（WSL2 + Agent 对接）
 
@@ -338,7 +351,31 @@ if "%AGENT_TOOLS%"=="all" ( set "TOOLS_ARG=--tools all" ) else ( set "TOOLS_ARG=
 - **菜单标注**：实测速度标注到标题后（`[57 t/s]`）、破限模型特殊标注、不同 B 参数量化版写清（如 12B-Q5_K_M）
 - **编码选择**：见 Troubleshooting「脚本闪退」——新脚本推荐 UTF-8 + 全英文；既有 GBK 脚本保留并在编辑器中手动选 GBK
 
-## 五、Parameter Dictionary（参数词典）
+#### 6A：模型清单自动同步器 `update-launchers`（2026-08-16 新增）
+
+- **位置**：`D:\dev\projects\llama.cpp\` 下 `update-launchers.bat`（纯 ASCII 入口）+ `update_launchers.py`（Python 3.11 纯标准库，用现成 `.venv\Scripts\python.exe`）+ `launcher-models.json`（注册表，UTF-8）
+- **作用**：扫描 `D:\dev\models\chat`，自动同步 4 个工件——`start-CPU-Toolcall-Launcher.bat` / `start-Gemma4-Launcher.bat` / `start-Qwen-Launcher.bat` / `models-config.ini`（Router preset）
+  - 模型目录被删 → 自动移除对应变量/菜单/启动块并重编号菜单；ini 僵尸段同步清除
+  - 新模型目录出现 → 按家族自动生成默认参数条目（菜单标 [NEW]）：gemma→Gemma4 启动器（自动配对 gemma4_mtp draft 生成 +MTP 条目）/ qwen→Qwen / lfm→CPU / 其他→Qwen
+  - 每次写入前自动备份 `backup\<名>.bak-YYYYMMDD-HHMMSS`
+- **用法**：双击（报告+确认）| `--check` 干跑（预览写 `backup\preview\`）| `--yes` 全自动 | `--extract` 从 3 脚本重建注册表 | `--no-scan` 按注册表原样渲染（回归）
+- **要点**：手工调参改注册表 JSON 而非直接改 3 个启动脚本（会被覆盖）；生成器严格按各脚本编码写出（Gemma4/Qwen=GBK 无 BOM、CPU/ini=ASCII、CRLF）；ini 相比旧 generate_ini.bat 修复了「文件名含 mtp 即被排除」的 bug（内置 MTP heads 模型现在也能进 Router）
+
+#### 6B：参数知识库 + 26B 长会话降速实测修复（2026-08-16）
+
+**参数知识库（三源治理）**：
+- `model-profiles.json`：官方/实测参数卡片（Gemma4 全系含 QAT、Qwen3.6/3.5、GLM、Devstral、LFM、Phi 等，含采样/ctx/KV/MTP 规则/来源 URL/verified 级别）。官方 Gemma4：temp 1.0/top-p 0.95/top-k 64、256K ctx、QAT 唯一官方量化 UD-Q4_K_XL、MTP n-max 2 起步+2GB 内存；Qwen3.6 精确编码 temp 0.6/通用 1.0
+> 📎 **知识库参考**：[`./references/model-profiles.json`](./references/model-profiles.json)（脱敏通用版）。⚠️ 其中 `verified: official` 的来源 URL 是在采集时从厂商文档记录，本技能未逐一复核，使用前请自行核实可达性。
+- 新模型自动条目三源合并：家族模板 → 知识库匹配覆盖 → 用户注册表最终覆盖；报告标注 profile 来源
+- `update-launchers.bat --audit`：GGUF 头解析（arch/层数/SWA/KV 维度）+ KV 内存估算 + 采样对比 + 16GB 显存红绿灯，只读
+
+**26B-A4B QAT 长会话降速根因（实测，2026-08-16）**：
+- 真相：Gemma 4 是 SWA 混合注意力（30 层中 28 层滑动窗口 1024）→ **KV 极小（64K 仅 ~0.4GB），KV 膨胀论不成立**；瓶颈是 14.25GB 权重 + draft + mmproj 使 16GB 极度临界
+- 实测基准（51K 上下文 tg t/s）：旧基线（ngl 硬编码+draft 层 24）**10.6**；draft 全 CPU **26.9**；`--fit on --fit-ctx 65536`（权重留 ~2.4GB 在 host）+ draft 层 8 **72-93**（~7 倍）
+- 关键证据：S1 日志 `offloaded 31/31 layers to GPU`（13,573 MiB）+ KV 839MiB + draft 425MiB + mmproj ≈ 超过 16GB → CUDA graph 回退 → 解码阶梯下降；`--fit` 自动分层后恢复
+- 修复已写入启动脚本：菜单 6/8/17 与新增菜单 9「纯文本 Agent」：移除硬编码 -ngl（fit 自动分层；本 build fit 默认 on 但 ngl 被用户设置时会 abort）+ `--fit-ctx 65536` + `--gpu-layers-draft 8` + `--keep 8192` + `--metrics`；agent 变体块内预算 2048
+- **带 mmproj 时 ctx_shift 被自动禁用（源码）**；纯文本 + `--context-shift` 仅对 **n_predict=-1 无限生成**生效（b10158 实测：有限 n_predict 仍在 64K 截断）。纯文本项核心收益是**前缀缓存复用**（实测第二轮 prompt_n=7，不再全量重算历史）
+- **128K 上探可行**：26B-A4B ctx_train=262144；SWA 使 KV 随 ctx 增长极小（128K 仅 ~1.0GB）；128K 是官方甜点（MRCR 128K 八针 26B=44.1%，256K 质量衰减）。实测 100K 上下文 pp=1480/tg=45.5 无 OOM 无截断。已新增菜单 9「26B-QAT + MTP 128K 多模态」并将纯文本 Agent 项升 128K（`-c 131072 --fit-ctx 131072 --timeout 300`）；26B 破限版菜单 14/15 已 fit 化（删硬 ngl + gld 8 + metrics，实测 tg=70）
 
 | 参数 | 推荐值 | 适用场景 | 理由 |
 |------|--------|---------|------|
@@ -393,13 +430,16 @@ if "%AGENT_TOOLS%"=="all" ( set "TOOLS_ARG=--tools all" ) else ( set "TOOLS_ARG=
 | `unknown command '-m'` | 新版子命令架构 | 改用 `llama-cli -m` 或 `llama-server --model` |
 | `sm_89` 而非 `sm_120` | 下载了 CUDA 12.4 版 | 下载 CUDA 13.3 版预编译包 |
 | MoE 模型 `draft-mtp` 报错 | 模型未训练 MTP heads | 确认模型是否支持（30B-A3B 不支持）|
-| 26B 加载 OOM | `-ngld` 过高 / ctx 过大 | 降 `-ngld` 到 40-50，ctx 限制 32K |
+| 26B 加载 OOM / 长会话阶梯降速 | 显存临界致 CUDA graph 回退（非 KV 膨胀，见 20260816 经验） | **优先 `--fit on --fit-ctx <ctx>` 自动分层**；手工 `-ngld` 40-50 仅作后备 |
 | 26B MTP `acceptance` 极低 | 用了 12B 的 draft | 换 A4B 专用 MTP GGUF |
+| 26B MTP 加载报 `invalid vector subscript` | 用了第三方 Q4_0 draft。官方 MTP 只有 Q8_0/BF16/F16，**从未有 Q4_0**；第三方 Q4_0 在 llama-server 的 draft 加载路径解析崩溃（**llama-cli 单独加载正常**，易误判为文件没问题） | 用官方 Q8_0 draft（`mtp-gemma-4-26B-A4B-it-Q8_0.gguf`），或以官方 Q8_0 用 `llama-quantize` 自量化 Q4_0 |
 | Phi-4 64K OOM | KV Cache 超 9GB | 降 KV 到 q4_0，从 32K 逐步测试 |
 | 脚本双击闪退（中文乱码） | UTF-8 中文被 cmd 按 GBK 解码，残留 ASCII 特殊字符被误解释（如 `ll=启用(默认) | off=关闭` 被拆成命令） | 方案 A：转 GBK 编码 + 删 `chcp 65001` + 去 emoji；方案 B（推荐新脚本）：UTF-8 + 全英文界面 |
 | `chcp 65001` / UTF-8 BOM 无法修复闪退 | 只影响控制台显示，cmd 解析文件内容时不用它 | 不要依赖，直接改文件编码 |
 | `nvidia-smi ... --format=csv,noheader` 报 noheader 不被识别 | cmd 中**逗号是参数分隔符**，`--format=csv,noheader` 被拆成 3 个参数（PowerShell 调用则无此问题） | bat 中加引号：`--format="csv,noheader,nounits"` |
 | GBK 文件在 VS Code 显示乱码 | VS Code 默认按 UTF-8 打开 | 编辑器右下角手动选 GBK；或改用方案 B 全英文 UTF-8 |
+| BAT `for` 循环内用 `goto` 导致只处理首文件/死循环 | `goto` 跳出会终止 `for` 循环（generate_ini.bat 踩坑） | 循环内改用 `call :子程序` 并 `exit /b` 返回循环体 |
+| 含中文 GBK 脚本被外部工具转 UTF-8 损坏（U+FFFD） | 编辑器/工具按 UTF-8 重存 | 用 skeleton+LCS 合并法从 backup 恢复中文（见 `references/20260816-session-experience.md` 六节） |
 | 128K 上下文加载崩溃 | 16GB 显存下权重 + 128K KV 超限 | 降 64K + 提 ngl（27B 实测反而更快） |
 | 模型不支持工具调用 | 模型能力限制（如 Phi-4-mini） | 换支持模型；菜单标注 `[!] NO tool calls` |
 

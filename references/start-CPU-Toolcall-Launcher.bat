@@ -43,15 +43,27 @@ if "%AGENT_TOOLS%"=="all" (
 )
 
 REM ============================================================
+REM === Reasoning control (tool model: thinking OFF) ===========
+REM === Thinking off prevents tool-call loops (see repo exp) ===
+REM ============================================================
+set "REASONING=off"
+set "REASONING_ARG=--reasoning %REASONING%"
+
+REM ============================================================
 REM === Model paths ============================================
 REM ============================================================
 set "QWEN35_2B=%CHAT%\Qwen3.5-2B\Qwen3.5-2B-Q4_K_M.gguf"
 set "QWEN35_2B_MM=%CHAT%\Qwen3.5-2B\mmproj-F16.gguf"
+set "QWEN35_4B=%CHAT%\Qwen3.5-4B-UD-Q8_K_XL\Qwen3.5-4B-UD-Q8_K_XL.gguf"
+set "QWEN35_4B_MM=%CHAT%\Qwen3.5-4B-UD-Q8_K_XL\mmproj-BF16.gguf"
 set "PHI4=%CHAT%\Phi-4-mini-instruct-Q4_K_M\Phi-4-mini-instruct-Q4_K_M.gguf"
 set "GEMMA12_QAT=%CHAT%\gemma-4-12B-it-qat-UD-Q4_K_XL\gemma-4-12B-it-qat-UD-Q4_K_XL.gguf"
 set "GEMMA12_MM=%CHAT%\gemma-4-12B-it-qat-UD-Q4_K_XL\mmproj-F16.gguf"
 set "GEMMA_E4B=%CHAT%\gemma-4-E4B-it-qat-GGUF\gemma-4-E4B-it-qat-UD-Q4_K_XL.gguf"
 set "GEMMA_E4B_MM=%CHAT%\gemma-4-E4B-it-qat-GGUF\mmproj-BF16.gguf"
+set "QPAW_MTP=%CHAT%\QwenPaw-Flash-9B-heretic-MTP-Q4_K_M\QwenPaw-Flash-9B-heretic-MTP-Q4_K_M.gguf"
+set "QPAW_9B=%CHAT%\QwenPaw-Flash-9B-Q4_K_M\QwenPaw-Flash-9B-Q4_K_M.gguf"
+set "LFM25_8B=%CHAT%\LFM2.5-8B-A1B-UD-Q4_K_M\LFM2.5-8B-A1B-UD-Q4_K_M.gguf"
 
 REM ============================================================
 REM === Function: file check ===================================
@@ -82,15 +94,23 @@ echo  1) Qwen3.5-2B [57 t/s] 128K [KV q4_0 fast] (multimodal)
 echo  2) Phi-4-mini [38 t/s] 128K [KV q4_0 fast] [!] NO tool calls
 echo  3) gemma-12B-QAT [13 t/s] 128K [KV q8_0 quality]
 echo  4) gemma-E4B [30 t/s] 128K [KV q8_0 quality] (multimodal)
-echo  5) Exit
+echo  5) Qwen3.5-4B-UD [13.46 t/s] 128K [KV q8_0 fast] (multimodal)
+echo  6) QwenPaw-9B-heretic-MTP [27 t/s] 128K [KV q8_0] (MTP spec)
+echo  7) QwenPaw-9B [16 t/s] 128K [KV q8_0] (MTP version in #6 faster)
+echo  8) LFM2.5-8B-A1B-UD [44 t/s] 128K [KV q8_0] (MoE)
+echo  9) Exit
 echo ============================================
-set /p c="Select [1-4]: "
+set /p c="Select [1-8]: "
 
 if "%c%"=="1" goto RUN_QWEN35_2B
 if "%c%"=="2" goto RUN_PHI4
 if "%c%"=="3" goto RUN_GEMMA12
 if "%c%"=="4" goto RUN_E4B
-if "%c%"=="5" exit
+if "%c%"=="5" goto RUN_QWEN35_4B
+if "%c%"=="6" goto RUN_QPAW_MTP
+if "%c%"=="7" goto RUN_QPAW_9B
+if "%c%"=="8" goto RUN_LFM25_8B
+if "%c%"=="9" exit
 goto menu
 
 REM ============================================================
@@ -127,7 +147,7 @@ llama-server.exe ^
   --temp 0.7 ^
   --top-p 0.95 ^
   --top-k 20 ^
-  %TOOLS_ARG% ^
+  %TOOLS_ARG% %REASONING_ARG% ^
   --timeout 300
 pause & goto menu
 
@@ -158,7 +178,7 @@ llama-server.exe ^
   --temp 0.7 ^
   --top-p 0.95 ^
   --top-k 20 ^
-  %TOOLS_ARG% ^
+  %TOOLS_ARG% %REASONING_ARG% ^
   --timeout 300
 pause & goto menu
 
@@ -191,7 +211,7 @@ llama-server.exe ^
   --temp 1.0 ^
   --top-p 0.95 ^
   --top-k 64 ^
-  %TOOLS_ARG% ^
+  %TOOLS_ARG% %REASONING_ARG% ^
   --timeout 300
 pause & goto menu
 
@@ -223,6 +243,134 @@ llama-server.exe ^
   --temp 1.0 ^
   --top-p 0.95 ^
   --top-k 64 ^
-  %TOOLS_ARG% ^
+  %TOOLS_ARG% %REASONING_ARG% ^
+  --timeout 300
+pause & goto menu
+
+:RUN_QWEN35_4B
+call :check_file "%QWEN35_4B%"
+call :check_file "%QWEN35_4B_MM%"
+echo ============================================
+echo Qwen3.5-4B-UD multimodal 128K (CPU)
+echo   - UD-Q8_K_XL weights, [13.46 t/s] (measured)
+echo   - KV q8_0, ~7GB RAM
+echo ============================================
+llama-server.exe ^
+  -m "%QWEN35_4B%" ^
+  --mmproj "%QWEN35_4B_MM%" ^
+  --jinja ^
+  --image-min-tokens 1024 ^
+  -c %CTX_CPU% ^
+  -ngl 0 ^
+  -np 1 ^
+  -t %THREADS% ^
+  --threads-batch %THREADS% ^
+  --batch-size 256 ^
+  --cache-type-k q8_0 ^
+  --cache-type-v q8_0 ^
+  --keep -1 ^
+  --load-mode mmap ^
+  --host 0.0.0.0 ^
+  --port %PORT% ^
+  --api-key %API_KEY% ^
+  --temp 0.7 ^
+  --top-p 0.95 ^
+  --top-k 20 ^
+  %TOOLS_ARG% %REASONING_ARG% ^
+  --timeout 300
+pause & goto menu
+
+:RUN_QPAW_MTP
+call :check_file "%QPAW_MTP%"
+echo ============================================
+echo QwenPaw-Flash-9B-heretic-MTP 128K (CPU)
+echo   - qwen35 hybrid (Gated DeltaNet + Gated Attn)
+echo   - MTP head built-in, --spec-type draft-mtp n-max 2
+echo   - KV q8_0 (tiny KV ~2GB @128K), tool calls OK
+echo ============================================
+llama-server.exe ^
+  -m "%QPAW_MTP%" ^
+  --jinja ^
+  -c %CTX_CPU% ^
+  -ngl 0 ^
+  -np 1 ^
+  -t %THREADS% ^
+  --threads-batch %THREADS% ^
+  --batch-size 256 ^
+  --cache-type-k q8_0 ^
+  --cache-type-v q8_0 ^
+  --spec-type draft-mtp ^
+  --spec-draft-n-max 2 ^
+  --keep -1 ^
+  --load-mode mmap ^
+  --host 0.0.0.0 ^
+  --port %PORT% ^
+  --api-key %API_KEY% ^
+  --temp 1.0 ^
+  --top-p 0.95 ^
+  --top-k 20 ^
+  %TOOLS_ARG% %REASONING_ARG% ^
+  --timeout 300
+pause & goto menu
+
+:RUN_QPAW_9B
+call :check_file "%QPAW_9B%"
+echo ============================================
+echo QwenPaw-Flash-9B 128K (CPU)
+echo   - qwen35 hybrid (Gated DeltaNet + Gated Attn)
+echo   - no MTP head, bare run
+echo   - KV q8_0 (tiny KV ~2GB @128K), tool calls OK
+echo ============================================
+llama-server.exe ^
+  -m "%QPAW_9B%" ^
+  --jinja ^
+  -c %CTX_CPU% ^
+  -ngl 0 ^
+  -np 1 ^
+  -t %THREADS% ^
+  --threads-batch %THREADS% ^
+  --batch-size 256 ^
+  --cache-type-k q8_0 ^
+  --cache-type-v q8_0 ^
+  --keep -1 ^
+  --load-mode mmap ^
+  --host 0.0.0.0 ^
+  --port %PORT% ^
+  --api-key %API_KEY% ^
+  --temp 1.0 ^
+  --top-p 0.95 ^
+  --top-k 20 ^
+  %TOOLS_ARG% %REASONING_ARG% ^
+  --timeout 300
+pause & goto menu
+
+:RUN_LFM25_8B
+call :check_file "%LFM25_8B%"
+echo ============================================
+echo LFM2.5-8B-A1B-UD 128K (CPU)
+echo   - lfm2moe MoE 32 exp / 4 active (A1B)
+echo   - KV q8_0 (tiny KV ~0.8GB @128K), tool calls OK
+echo ============================================
+llama-server.exe ^
+  -m "%LFM25_8B%" ^
+  --jinja ^
+  -c %CTX_CPU% ^
+  -ngl 0 ^
+  -np 1 ^
+  -t %THREADS% ^
+  --threads-batch %THREADS% ^
+  --batch-size 256 ^
+  --cache-type-k q8_0 ^
+  --cache-type-v q8_0 ^
+  --keep -1 ^
+  --load-mode mmap ^
+  --host 0.0.0.0 ^
+  --port %PORT% ^
+  --api-key %API_KEY% ^
+  --temp 0.2 ^
+  --top-p 0.95 ^
+  --top-k 80 ^
+  --repeat-penalty 1.05 ^
+  %TOOLS_ARG% %REASONING_ARG% ^
   --timeout 300
 pause & goto menu
