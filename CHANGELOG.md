@@ -2,6 +2,26 @@
 
 llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）版本变更记录。
 
+## [v3.4] - 2026-08-29
+
+### Added
+- SKILL.md 新增「故障快速排查（30 秒版）」：端口监听 / WSL 宿主机 IP / apiKey / maxInputTokens / reasoningEffort / silent-fail 六步清单
+- SKILL.md 新增「技能版本维护 SOP」（十）：版本行 → CHANGELOG → 同步 .agents → one-line reason → 副本验证
+- `scripts/detect.py` / `detect.ps1` 新增 [7/7] 服务连接诊断：端口监听探测 + `/health`（PS）+ WSL 环境提示（宿主机 IP 而非 localhost）
+- `update_launchers.py` `make_auto` qwen3.8 生成后新增 REQUIRED_ARGS 断言（缺 `--reasoning-budget 8192`/`--reasoning-format deepseek`/`--chat-template-kwargs`/`--reasoning-preserve`/`--min-p 0.0` 即拒绝写入）——把静默失败变显式失败
+
+## [v3.3] - 2026-08-29
+
+### Added
+- 新增 Qwen3.8-27B 专项（Step 3F）：qwen35 架构特性（65 层/内置 MTP/SWA interval=4）、官方采样表、16GB 部署速度矩阵、**128K 手工 ngl 提速方法论**（IQ3_S 128K：fit 16.0 → ngl58+batch512 18.8，+17.5%）、长会话稳定参数（`--reasoning-budget` + `--reasoning-format deepseek`）
+- 新增 `references/20260829-session-experience.md`：Qwen3.8 全流程实测、长会话验证 SOP（多轮/跑满/埋针）、更新器工程缺陷 3 连修复、Router fit 多模型限制、WSL/VS Code `ECONNREFUSED` 排查 SOP、参数名与转义坑速查
+- Step 4 扩充 VS Code customendpoint 接入要点（maxInputTokens ≤ `-c`、settings 键名、reasoningEffort 取值、apiKey 匹配）与 WSL 宿主机 IP 获取
+
+### Fixed
+- 更新器工程缺陷：`make_auto` 生成 group 缺 `"t"` 键致第二次同步 `KeyError: 't'`；多行参数串 CRLF 混合致孤立 LF；字符串 replace 注入参数因行序假设错误静默失败
+- 参数名勘误：`--repeat-penalty`（非 `--repetition-penalty`）、`--load-mode mmap`（`--no-mmap` 废弃）、`--cache-reuse` 当前 context 不支持、`--defrag-thold` 废弃
+- Troubleshooting 新增 6 行：参数名/转义/思考型 max_tokens/VS Code 连接/废弃参数
+
 ## [v3.2] - 2026-08-16
 
 ### Added

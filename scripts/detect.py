@@ -25,6 +25,7 @@ Cross-platform notes:
 import argparse
 import os
 import re
+import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -191,6 +192,30 @@ def check_vram():
     return free_mb
 
 
+def check_connectivity(port=8084):
+    """Probe whether the llama-server port is listening and give WSL hints."""
+    print(f"[7/7] Checking service connectivity (port {port}) ... ", end="")
+    is_wsl = bool(os.environ.get("WSL_DISTRO_NAME")) or \
+        Path("/proc/sys/fs/binfmt_misc/WSLInterop").exists()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(3)
+    res = -1
+    try:
+        res = sock.connect_ex(("127.0.0.1", port))
+        if res == 0:
+            print(f"OK port {port} is listening")
+        else:
+            print(f"WARNING port {port} NOT listening - start the launcher first")
+    except Exception as exc:  # pragma: no cover
+        print(f"WARNING cannot probe port {port}: {exc}")
+    finally:
+        sock.close()
+    if is_wsl:
+        print("      WARNING WSL detected: VS Code/client must use the HOST IP, not localhost")
+        print("          get host IP with: cat /etc/resolv.conf | grep nameserver")
+    return "listening" if res == 0 else "not listening"
+
+
 def main():
     default_llama = r"C:\llama.cpp" if is_windows() else "llama.cpp"
     default_models = r"C:\models" if is_windows() else "models"
@@ -236,6 +261,10 @@ def main():
     vram = check_vram()
     if vram is not None:
         results["VRAM_Free_MB"] = vram
+
+    conn = check_connectivity()
+    if conn:
+        results["Connectivity"] = conn
 
     print()
     print("=" * 44)

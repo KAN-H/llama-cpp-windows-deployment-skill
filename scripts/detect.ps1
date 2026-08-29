@@ -220,6 +220,33 @@ try {
 }
 
 # --------------------------------------------------
+# [7/7] 服务连接诊断（端口监听 + /health + WSL 提示）
+# --------------------------------------------------
+Write-Host "[7/7] 检测服务连接（端口 8084）... " -NoNewline
+$connPort = 8084
+$listener = netstat -ano | Select-String ":$connPort\s" | Select-String "LISTENING"
+if ($listener) {
+    Write-Host "✅ 端口 $connPort 已监听" -ForegroundColor Green
+    $results["Port_$connPort"] = "LISTENING"
+    try {
+        $health = Invoke-RestMethod -Uri "http://127.0.0.1:$connPort/health" -TimeoutSec 5
+        Write-Host "      ✅ /health: $($health.status)" -ForegroundColor Green
+        $results["Health"] = $health.status
+    } catch {
+        Write-Host "      ⚠️ /health 不可达（端口通但服务未就绪？）" -ForegroundColor Yellow
+        $results["Health"] = "unreachable"
+    }
+} else {
+    Write-Host "⚠️ 端口 $connPort 无监听 —— 请先启动启动器" -ForegroundColor Yellow
+    $results["Port_$connPort"] = "NOT listening"
+}
+if ($env:WSL_DISTRO_NAME) {
+    Write-Host "      ⚠️ 检测到 WSL 环境：VS Code / 客户端请用宿主机 IP 而非 localhost" -ForegroundColor Yellow
+    Write-Host "         获取：cat /etc/resolv.conf | grep nameserver" -ForegroundColor Yellow
+    $results["WSL"] = "detected - use host IP, not localhost"
+}
+
+# --------------------------------------------------
 # 汇总报告
 # --------------------------------------------------
 Write-Host ""
