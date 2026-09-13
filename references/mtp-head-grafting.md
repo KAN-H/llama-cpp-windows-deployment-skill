@@ -210,9 +210,21 @@ llama-server -m <grafted.gguf> ... --spec-type draft-mtp --spec-draft-n-max 2
 ## 7. 参考实现
 
 `plan/_mtp_graft.py`（纯标准库）：
-- `--check`（默认）：只读，报告兼容性、head 字节数、磁盘空间、锚点层、是否已有 head
-- `--go --out <path>`：写入 + **写后自检**
-- 内置拒绝条件：目标已有 head 张量、donor 无 `nextn_predict_layers`、非 u32 block_count
+- `--check`（默认）：只读，报告 head 字节数、磁盘空间，以及**结构性兼容性结论**
+- `--go --out <path>`：写入 + **写后自检**（`--go` 必须带 `--out`；`--check`/`--go` 互斥）
+- **兼容性是一道闸门，不是一份报告。** 不满足下列任一条即**拒绝写入**
+  （退出码 1，什么都不落盘，无需清理）：
+  - 架构不同（`general.architecture` 不一致）
+  - `block_count` 关系不对（必须 donor = target + 1）
+  - 有 target 张量在 donor 中找不到（命名不同 ⇒ 不是同一基座）
+  - 有张量 **shape 不一致**（⇒ 不是同一模型）
+  - donor 存在既不属于 target、也不属于 head 的额外张量
+  - 目标已自带 head 张量（防重复添加）
+  - donor 没有 `nextn_predict_layers`；`block_count` 不是 u32
+
+> ⚠️ **量化类型差异不是拒绝条件。** 同一基座的两种量化配方（如 `UD-Q4_K_XL` vs `Q4_K_P`）
+> 本来就对不同张量用不同类型；GGUF 每张量自带类型，嫁接不受影响 —— 它只作为提示输出。
+> （第一版把这个当硬条件，**误拒了已知可用的真实组合**：381/733 个张量类型不同但 shape 全一致。）
 
 **磁盘**：need ≈ 原模型 + 0.5 GiB（实例：22.37 GiB）。
 **可逆**：原模型不动，产物直接删即可。

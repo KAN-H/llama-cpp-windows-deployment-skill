@@ -7,7 +7,7 @@ user-invocable: true
 
 # llama.cpp Windows 多模型部署与优化集成技能
 
-> **版本**: v3.5 | **基准硬件**: RTX 5060 Ti 16GB + Intel U7 270K / CPU-only (48GB DDR5) | **平台**: Windows 10/11 + WSL2 | **llama.cpp 版本**: b10056 – b10713+ | **更新**: 2026-09-13（**新增第五章 MoE 显存预算与卸载**：`--fit` ⟂ `--n-cpu-moe` 互斥、`-b/-ub` 成对提升、`--load-mode none`；新增 `references/mtp-head-grafting.md` **内建 MTP head 嫁接手册**；新增回归方法论与 `__pycache__` 陷阱）
+> **版本**: v3.5.1 | **基准硬件**: RTX 5060 Ti 16GB + Intel U7 270K / CPU-only (48GB DDR5) | **平台**: Windows 10/11 + WSL2 | **llama.cpp 版本**: b10056 – b10713+ | **更新**: 2026-09-13（**新增第五章 MoE 显存预算与卸载**：`--fit` ⟂ `--n-cpu-moe` 互斥、`-b/-ub` 成对提升、`--load-mode none`；新增 `references/mtp-head-grafting.md` **内建 MTP head 嫁接手册**；新增回归方法论与 `__pycache__` 陷阱）
 
 ## 一、When to Use（触发词）
 
