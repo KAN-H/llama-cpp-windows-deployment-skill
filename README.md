@@ -10,22 +10,23 @@
 
 | File | Description |
 |------|-------------|
-| [`SKILL.md`](./SKILL.md) | Main skill file — activated by Agent on demand (v3.5) |
-| [`references/gemma4-menu-scripts.bat`](./references/gemma4-menu-scripts.bat) | Full 10-option Gemma 4 launch menu (Q5/Q8, QAT, MTP, 26B-A4B) |
-| [`references/qwen-scripts.bat`](./references/qwen-scripts.bat) | Qwen 3-tier deployment scripts (bare / external draft / built-in MTP) |
-| [`references/preset-templates.json`](./references/preset-templates.json) | Preset templates for 7 deployment scenarios |
-| [`references/start-CPU-Toolcall-Launcher.bat`](./references/start-CPU-Toolcall-Launcher.bat) | CPU-only tool-calling launcher (`-ngl 0`, 128K ctx, 8-model menu) |
-| [`references/router-mode-preset.bat`](./references/router-mode-preset.bat) | Router Mode launcher — `--models-preset` variant (per-model overrides) |
-| [`references/router-mode-simple.bat`](./references/router-mode-simple.bat) | Router Mode launcher — `--models-dir` simple variant |
-| [`references/model-profiles.json`](./references/model-profiles.json) | Curated model parameter knowledge base (17 profiles, verified levels) |
-| [`references/20260803-session-experience.md`](./references/20260803-session-experience.md) | Benchmark data: Qwen3.6-27B 64K tuning, CPU toolcall, 11/11 tool matrix, BAT encoding |
-| [`references/20260805-session-experience.md`](./references/20260805-session-experience.md) | Reasoning control (anti-deadloop, `--reasoning-budget`) & GBK safe editing |
-| [`references/20260806-session-experience.md`](./references/20260806-session-experience.md) | 26B MTP draft: official Q8_0 vs third-party Q4_0 diagnosis |
-| [`references/20260816-session-experience.md`](./references/20260816-session-experience.md) | `--fit` auto-offload (7x speedup), CPU toolcall new models, GBK recovery SOP |
-| [`references/20260829-session-experience.md`](./references/20260829-session-experience.md) | Qwen3.8-27B tuning, long-session validation SOP, updater fixes, WSL/VS Code `ECONNREFUSED` |
-| [`references/20260913-moe-offload-community-research.md`](./references/20260913-moe-offload-community-research.md) | MoE offload: community state of the art, per-layer expert skew, the `-ub` prefill lever |
-| [`references/20260913-session-experience.md`](./references/20260913-session-experience.md) | `--fit` ⟂ `--n-cpu-moe`, `-ub` clamping, GGUF tensor-table parsing, regression methodology |
-| [`references/mtp-head-grafting.md`](./references/mtp-head-grafting.md) | **Built-in MTP head grafting** — full GGUF surgery, four traps, verification protocol |
+| [`SKILL.md`](./SKILL.md) | Main skill file — activated by Agent on demand (v3.6) |
+| **[`references/INDEX.md`](./references/INDEX.md)** | **Quick index** — session logs / guides / assets, plus the **authoritative code-path table** |
+| [`references/assets/gemma4-menu-scripts.bat`](./references/assets/gemma4-menu-scripts.bat) | Full 10-option Gemma 4 launch menu (Q5/Q8, QAT, MTP, 26B-A4B) |
+| [`references/assets/qwen-scripts.bat`](./references/assets/qwen-scripts.bat) | Qwen 3-tier deployment scripts (bare / external draft / built-in MTP) |
+| [`references/assets/preset-templates.json`](./references/assets/preset-templates.json) | Preset templates for 7 deployment scenarios |
+| [`references/assets/start-CPU-Toolcall-Launcher.bat`](./references/assets/start-CPU-Toolcall-Launcher.bat) | CPU-only tool-calling launcher (`-ngl 0`, 128K ctx, 8-model menu) |
+| [`references/assets/router-mode-preset.bat`](./references/assets/router-mode-preset.bat) | Router Mode launcher — `--models-preset` variant (per-model overrides) |
+| [`references/assets/router-mode-simple.bat`](./references/assets/router-mode-simple.bat) | Router Mode launcher — `--models-dir` simple variant |
+| [`references/assets/model-profiles.json`](./references/assets/model-profiles.json) | Curated model parameter knowledge base (17 profiles, verified levels) |
+| [`references/sessions/20260803-session-experience.md`](./references/sessions/20260803-session-experience.md) | Benchmark data: Qwen3.6-27B 64K tuning, CPU toolcall, 11/11 tool matrix, BAT encoding |
+| [`references/sessions/20260805-session-experience.md`](./references/sessions/20260805-session-experience.md) | Reasoning control (anti-deadloop, `--reasoning-budget`) & GBK safe editing |
+| [`references/sessions/20260806-session-experience.md`](./references/sessions/20260806-session-experience.md) | 26B MTP draft: official Q8_0 vs third-party Q4_0 diagnosis |
+| [`references/sessions/20260816-session-experience.md`](./references/sessions/20260816-session-experience.md) | `--fit` auto-offload (7x speedup), CPU toolcall new models, GBK recovery SOP |
+| [`references/sessions/20260829-session-experience.md`](./references/sessions/20260829-session-experience.md) | Qwen3.8-27B tuning, long-session validation SOP, updater fixes, WSL/VS Code `ECONNREFUSED` |
+| [`references/guides/20260913-moe-offload-community-research.md`](./references/guides/20260913-moe-offload-community-research.md) | MoE offload: community state of the art, per-layer expert skew, the `-ub` prefill lever |
+| [`references/sessions/20260913-session-experience.md`](./references/sessions/20260913-session-experience.md) | `--fit` ⟂ `--n-cpu-moe`, `-ub` clamping, GGUF tensor-table parsing, regression methodology |
+| [`references/guides/mtp-head-grafting.md`](./references/guides/mtp-head-grafting.md) | **Built-in MTP head grafting** — full GGUF surgery, four traps, verification protocol |
 | [`scripts/detect.ps1`](./scripts/detect.ps1) | Automated environment diagnostics (PowerShell) |
 | [`scripts/detect.py`](./scripts/detect.py) | Cross-platform diagnostics (Python 3.7+, Windows/Linux/macOS) |
 

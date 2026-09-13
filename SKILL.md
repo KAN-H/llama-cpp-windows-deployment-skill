@@ -7,7 +7,9 @@ user-invocable: true
 
 # llama.cpp Windows 多模型部署与优化集成技能
 
-> **版本**: v3.5.1 | **基准硬件**: RTX 5060 Ti 16GB + Intel U7 270K / CPU-only (48GB DDR5) | **平台**: Windows 10/11 + WSL2 | **llama.cpp 版本**: b10056 – b10713+ | **更新**: 2026-09-13（**新增第五章 MoE 显存预算与卸载**：`--fit` ⟂ `--n-cpu-moe` 互斥、`-b/-ub` 成对提升、`--load-mode none`；新增 `references/mtp-head-grafting.md` **内建 MTP head 嫁接手册**；新增回归方法论与 `__pycache__` 陷阱）
+> **版本**: v3.6.0 | **基准硬件**: RTX 5060 Ti 16GB + Intel U7 270K / CPU-only (48GB DDR5) | **平台**: Windows 10/11 + WSL2 | **llama.cpp 版本**: b10056 – b10713+ | **更新**: 2026-09-13（**references 目录重整**为 `sessions/` / `guides/` / `assets/` 三类 + 新增 [`reference index`](./references/INDEX.md) **权威代码路径表**；`model-profiles.json` 同步补入 `moe` 块；新增第五章 MoE 显存预算与卸载、内建 MTP head 嫁接手册）
+>
+> 📚 **references 导航**：先看 [`./references/INDEX.md`](./references/INDEX.md) —— 目录结构、每份文档的用途，以及**权威代码路径表**（历史文档中的旧路径一律以该表为准）。
 
 ## 一、When to Use（触发词）
 
@@ -151,7 +153,7 @@ pause
 
 **大模型（≥12B）无需创建 preset.json**，继承全局参数。
 
-> 📎 **Router Mode 参考脚本**：[`./references/router-mode-preset.bat`](./references/router-mode-preset.bat)（`--models-preset` 版，最贴合 preset 优先级设计）、[`./references/router-mode-simple.bat`](./references/router-mode-simple.bat)（`--models-dir` 简单版）。两者均为 ASCII 通用模板，改顶部 `LLAMA_DIR`/`MODELS_DIR`/`PORT` 即可。
+> 📎 **Router Mode 参考脚本**：[`./references/assets/router-mode-preset.bat`](./references/assets/router-mode-preset.bat)（`--models-preset` 版，最贴合 preset 优先级设计）、[`./references/assets/router-mode-simple.bat`](./references/assets/router-mode-simple.bat)（`--models-dir` 简单版）。两者均为 ASCII 通用模板，改顶部 `LLAMA_DIR`/`MODELS_DIR`/`PORT` 即可。
 
 #### 模式 B：单模型实例（专用端口）
 
@@ -189,7 +191,7 @@ pause
 > 参考脚本 `gemma4-menu-scripts.bat` 菜单 7/9 保留 QAT+MTP 组合仅作实验入口（菜单已标注 `[!] QAT+MTP 不推荐`），正常使用请选 QAT 裸跑项（5/6）或非 QAT 的 MTP 项（1/2）。
 
 **26B-A4B MoE 特殊处理（2026-08-16 更新）**：
-- ⭐ **优先用 `--fit on --fit-ctx <ctx>` 让 llama.cpp 自动分层**（本 build fit 默认 on，但 `-ngl` 被显式设置时会 abort）。实测：16GB 下 51K 上下文从硬编码 ngl 的 10.6 t/s 提升到 72-93 t/s（~7 倍），根因是显存临界导致 CUDA graph 回退（详见 `references/20260816-session-experience.md`）
+- ⭐ **优先用 `--fit on --fit-ctx <ctx>` 让 llama.cpp 自动分层**（本 build fit 默认 on，但 `-ngl` 被显式设置时会 abort）。实测：16GB 下 51K 上下文从硬编码 ngl 的 10.6 t/s 提升到 72-93 t/s（~7 倍），根因是显存临界导致 CUDA graph 回退（详见 `references/sessions/20260816-session-experience.md`）
 - 手工 `-ngld`（40-50）作为 fit 不可用时的后备方案
 - MTP draft 必须用 **A4B 专用** GGUF（不可复用 12B draft），且只认官方 Q8_0（第三方 Q4_0 在 server 加载路径必崩）
 - Context：**128K 是官方甜点**（ctx_train=262144、MRCR 128K=44.1%）；SWA 使 KV 随 ctx 增长极小（128K 仅 ~1.0GB）
@@ -253,7 +255,7 @@ pause
 
 > ⚠️ **BAT 注释提示**：行末 `::` 注释在 `if() (...)` 括号块内可能导致解析错误，如需在括号块内注释请改用 `REM` 语句。
 
-> 📎 **完整脚本参考**：[`./references/gemma4-menu-scripts.bat`](./references/gemma4-menu-scripts.bat)（Gemma 4 10 选项菜单）、[`./references/qwen-scripts.bat`](./references/qwen-scripts.bat)（Qwen 三档部署脚本）、[`./references/preset-templates.json`](./references/preset-templates.json)（各场景 Preset 模板集合）、[`./references/20260803-session-experience.md`](./references/20260803-session-experience.md)（全量实测数据与经验沉淀）
+> 📎 **完整脚本参考**：[`./references/assets/gemma4-menu-scripts.bat`](./references/assets/gemma4-menu-scripts.bat)（Gemma 4 10 选项菜单）、[`./references/assets/qwen-scripts.bat`](./references/assets/qwen-scripts.bat)（Qwen 三档部署脚本）、[`./references/assets/preset-templates.json`](./references/assets/preset-templates.json)（各场景 Preset 模板集合）、[`./references/sessions/20260803-session-experience.md`](./references/sessions/20260803-session-experience.md)（全量实测数据与经验沉淀）
 
 #### 3D：Qwen3.6-27B 稠密模型专项（64K + 高 ngl 提速）⭐ 2026-08-03 实测
 
@@ -276,7 +278,7 @@ pause
 
 #### 3E：纯 CPU 工具调用脚本（12B 以下，不占 GPU）
 
-菜单式一键脚本 `start-CPU-Toolcall-Launcher.bat`（端口 8086，脚本顶部 `PORT` 变量可改；[参考脚本](./references/start-CPU-Toolcall-Launcher.bat)），全部 `-ngl 0`、128K 上下文：
+菜单式一键脚本 `start-CPU-Toolcall-Launcher.bat`（端口 8086，脚本顶部 `PORT` 变量可改；[参考脚本](./references/assets/start-CPU-Toolcall-Launcher.bat)），全部 `-ngl 0`、128K 上下文：
 
 | 模型 | KV | 实测 tg | 内存 | 工具调用 |
 |------|----|---------|------|---------|
@@ -299,7 +301,7 @@ pause
 - ⚠️ **LFM2.5 工具调用**：llama.cpp issue #26658——工具参数含引号/转义可能解析失败（规避：要求双引号无转义）
 - ⚠️ **llama-cli 单次测试必须加 `-st`（--single-turn）**：`-no-cnv` 在 b10158 仍进交互模式等 stdin，用管道/`Select-Object` 时看似卡死（实为等输入），勿误判为 hang
 - ✅ **MTP 在 CPU 上实测生效**：QwenPaw-heretic-MTP 27.3 vs 非 MTP 15.7 t/s（+74%），`draft acceptance = 0.725`；内置 MTP head 模型**不要**传 `--model-draft`
-- 完整实测见 [`./references/20260816-session-experience.md`](./references/20260816-session-experience.md)
+- 完整实测见 [`./references/sessions/20260816-session-experience.md`](./references/sessions/20260816-session-experience.md)
 
 #### 3F：Qwen3.8-27B 专项（qwen35 架构 + 长会话 + 128K）⭐ 2026-08-29 实测
 
@@ -409,7 +411,7 @@ if "%AGENT_TOOLS%"=="all" ( set "TOOLS_ARG=--tools all" ) else ( set "TOOLS_ARG=
 
 **参数知识库（三源治理）**：
 - `model-profiles.json`：官方/实测参数卡片（Gemma4 全系含 QAT、Qwen3.6/3.5、GLM、Devstral、LFM、Phi 等，含采样/ctx/KV/MTP 规则/来源 URL/verified 级别）。官方 Gemma4：temp 1.0/top-p 0.95/top-k 64、256K ctx、QAT 唯一官方量化 UD-Q4_K_XL、MTP n-max 2 起步+2GB 内存；Qwen3.6 精确编码 temp 0.6/通用 1.0
-> 📎 **知识库参考**：[`./references/model-profiles.json`](./references/model-profiles.json)（脱敏通用版）。⚠️ 其中 `verified: official` 的来源 URL 是在采集时从厂商文档记录，本技能未逐一复核，使用前请自行核实可达性。
+> 📎 **知识库参考**：[`./references/assets/model-profiles.json`](./references/assets/model-profiles.json)（脱敏通用版）。⚠️ 其中 `verified: official` 的来源 URL 是在采集时从厂商文档记录，本技能未逐一复核，使用前请自行核实可达性。
 - 新模型自动条目三源合并：家族模板 → 知识库匹配覆盖 → 用户注册表最终覆盖；报告标注 profile 来源
 - `update-launchers.bat --audit`：GGUF 头解析（arch/层数/SWA/KV 维度）+ KV 内存估算 + 采样对比 + 16GB 显存红绿灯，只读
 
@@ -436,7 +438,7 @@ if "%AGENT_TOOLS%"=="all" ( set "TOOLS_ARG=--tools all" ) else ( set "TOOLS_ARG=
 ## 五、MoE 显存预算与卸载 ⭐ 2026-09-13 新增
 
 > 面向 16GB 卡跑 20GB+ MoE 模型（Qwen3.6-35B-A3B / Gemma4-26B-A4B 等）。
-> 详细实测数据与推导见 [`references/20260913-moe-offload-community-research.md`](./references/20260913-moe-offload-community-research.md)。
+> 详细实测数据与推导见 [`./references/guides/20260913-moe-offload-community-research.md`](./references/guides/20260913-moe-offload-community-research.md)。
 
 ### 5.1 ★★★ `--fit` 与 `--n-cpu-moe` **互斥**（最易踩的机制坑）
 
@@ -531,7 +533,7 @@ N = ceil( (W_non + KV + mmproj + draft + compute_buf − (VRAM − margin)) / E_
 | 启动参数 | ✅ `--spec-type draft-mtp --spec-draft-n-max 2`；❌ **不要传 `--model-draft`** |
 | 输出形态 | 不是**独立的** draft 模型；head 是权重的**第 41 层** |
 | 显存代价 | **≈头权重字节 × 3**（实测 0.49 GiB 权重 → 1,652 MiB）；原因是 `blk.40` 专家**不被 `--n-cpu-moe` 覆盖** + draft 自己的 KV / compute / graph |
-| 社区微调版无 head？” | ✅ **可以嫁接** → [`references/mtp-head-grafting.md`](./references/mtp-head-grafting.md)（含两个 bug、四个陷阱、验证协议） |
+| 社区微调版无 head？” | ✅ **可以嫁接** → [`./references/guides/mtp-head-grafting.md`](./references/guides/mtp-head-grafting.md)（含两个 bug、四个陷阱、验证协议） |
 
 > ⚠️ **“模型能加载” ≠ “投机在跑”** —— 缺少 `nextn_predict_layers` 时模型照样加载成功，
 > 但那 20 个张量是**死重量，永远不触发且不报错**。
@@ -576,7 +578,7 @@ N = ceil( (W_non + KV + mmproj + draft + compute_buf − (VRAM − margin)) / E_
 | 改了 `-ub` 但 prefill 不变 | `n_ubatch` **静默 clamp 到 `n_batch`** | `--batch-size` 与 `--ubatch-size` **成对**提升，见 §5.3 |
 | 手动改了 override，启动器没变 | **FND-064**：`.bat` 与 `ini` 两套独立生成路径 | 跑一次更新器；参数变更后必须复核两侧 |
 | 同一模型走启动器比走 Router 慢/卡 | batch、ubatch、`n-cpu-moe` 两侧不一致 | 以 override 为唯一事实源，两侧重新生成后对拍 |
-| 模型能加载但投机不加速 | 缺 `nextn_predict_layers`（或根本没传 `--spec-type draft-mtp`） | 查 `acceptance` 计数器；嫁接品见 `references/mtp-head-grafting.md` |
+| 模型能加载但投机不加速 | 缺 `nextn_predict_layers`（或根本没传 `--spec-type draft-mtp`） | 查 `acceptance` 计数器；嫁接品见 `references/guides/mtp-head-grafting.md` |
 | 嫁接产物能解析但推理结果错 | tensor offset 错位（如填充写成了整段长度） | **文件大小交叉校验**（全部张量字节 vs 真实文件长度，差 < 1%）；见嫁接手册 §3.4 |
 | 变异/测试莫名其妙的假失败 | `__pycache__` 陷阱：改了**同长度**的值 + 恢复时保留 mtime | 改成长度不同的值，或先清 `__pycache__` |
 | 脚本闪退无输出 | 不支持参数 / 中文注释 | 移除非支持参数，删除中文符号 |
@@ -596,7 +598,7 @@ N = ceil( (W_non + KV + mmproj + draft + compute_buf − (VRAM − margin)) / E_
 | `nvidia-smi ... --format=csv,noheader` 报 noheader 不被识别 | cmd 中**逗号是参数分隔符**，`--format=csv,noheader` 被拆成 3 个参数（PowerShell 调用则无此问题） | bat 中加引号：`--format="csv,noheader,nounits"` |
 | GBK 文件在 VS Code 显示乱码 | VS Code 默认按 UTF-8 打开 | 编辑器右下角手动选 GBK；或改用方案 B 全英文 UTF-8 |
 | BAT `for` 循环内用 `goto` 导致只处理首文件/死循环 | `goto` 跳出会终止 `for` 循环（generate_ini.bat 踩坑） | 循环内改用 `call :子程序` 并 `exit /b` 返回循环体 |
-| 含中文 GBK 脚本被外部工具转 UTF-8 损坏（U+FFFD） | 编辑器/工具按 UTF-8 重存 | 用 skeleton+LCS 合并法从 backup 恢复中文（见 `references/20260816-session-experience.md` 六节） |
+| 含中文 GBK 脚本被外部工具转 UTF-8 损坏（U+FFFD） | 编辑器/工具按 UTF-8 重存 | 用 skeleton+LCS 合并法从 backup 恢复中文（见 `references/sessions/20260816-session-experience.md` 六节） |
 | 128K 上下文加载崩溃 | 16GB 显存下权重 + 128K KV 超限 | 降 64K + 提 ngl（27B 实测反而更快） |
 | 模型不支持工具调用 | 模型能力限制（如 Phi-4-mini） | 换支持模型；菜单标注 `[!] NO tool calls` |
 | `invalid argument: --repetition-penalty` | llama.cpp 参数名是 `--repeat-penalty`（repetition 是模型/文档概念名） | 用 `--repeat-penalty` |
@@ -606,7 +608,7 @@ N = ceil( (W_non + KV + mmproj + draft + compute_buf − (VRAM − margin)) / E_
 | `--cache-reuse` 提示 not supported | 当前 context 类型不支持 | 移除该参数（自动禁用，无效） |
 | `--no-mmap`/`--defrag-thold` DEPRECATED | 新 build 弃用 | `--load-mode mmap`；KV 碎片已内建管理 |
 
-**参考脚本编码现状说明（2026-08-05 修订）**：`references/gemma4-menu-scripts.bat`、`qwen-scripts.bat`、`start-CPU-Toolcall-Launcher.bat` 已统一为 **UTF-8 + 全英文（纯 ASCII）+ 无 chcp**，任意 Windows cmd 可直接运行无乱码（方案 B）。实测教训：UTF-8 中文注释 + `chcp 65001` 的混合脚本在中文 Windows cmd 下会被 GBK 误解析导致命令错乱（如 `llama-server.exe` 被截断成 `erver.exe` 报错），因此参考脚本不再使用中文。用户自建脚本若需中文界面，请用方案 A（GBK 编码 + 删 chcp + 去 emoji）。
+**参考脚本编码现状说明（2026-08-05 修订）**：`references/assets/gemma4-menu-scripts.bat`、`qwen-scripts.bat`、`start-CPU-Toolcall-Launcher.bat` 已统一为 **UTF-8 + 全英文（纯 ASCII）+ 无 chcp**，任意 Windows cmd 可直接运行无乱码（方案 B）。实测教训：UTF-8 中文注释 + `chcp 65001` 的混合脚本在中文 Windows cmd 下会被 GBK 误解析导致命令错乱（如 `llama-server.exe` 被截断成 `erver.exe` 报错），因此参考脚本不再使用中文。用户自建脚本若需中文界面，请用方案 A（GBK 编码 + 删 chcp + 去 emoji）。
 
 ## 八、Version Upgrade Notes（版本升级说明）
 

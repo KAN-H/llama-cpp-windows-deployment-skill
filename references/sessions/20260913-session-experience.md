@@ -1,7 +1,9 @@
 # 2026-09-13 会话经验：MoE 参数智能化、回归方法论、MTP 嫁接
 
+> 📁 **历史快照** —— 正文保持当时原貌、不回改；文中代码路径以 [`../INDEX.md`](../INDEX.md) §5 权威路径表为准。
+
 > 基准：RTX 5060 Ti 16GB / Intel U7 270K / llama.cpp build 10713
-> 配套：`20260913-moe-offload-community-research.md`（社区调研）、`mtp-head-grafting.md`（嫁接手册）
+> 配套：[`../guides/20260913-moe-offload-community-research.md`](../guides/20260913-moe-offload-community-research.md)（社区调研）、[`../guides/mtp-head-grafting.md`](../guides/mtp-head-grafting.md)（嫁接手册）
 
 ---
 

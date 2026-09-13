@@ -1,5 +1,7 @@
 # 2026-08-29 Session Experience — Qwen3.8 极限优化 + 更新器工程修复 + WSL/VS Code 对接
 
+> 📁 **历史快照** —— 正文保持当时原貌、不回改；文中代码路径以 [`../INDEX.md`](../INDEX.md) §5 权威路径表为准。
+
 > 沉淀自 2026-08-28/29 两次会话：Qwen3.8-27B 部署与极限优化、`update-launchers` 自动同步器工程缺陷修复、Router fit 实测、VS Code customendpoint 接入排障。
 > 基准：RTX 5060 Ti 16GB / 48GB RAM / 24 线程 / llama.cpp b10448+（2026-08-16 构建）。
 

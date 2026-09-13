@@ -1,0 +1,723 @@
+{
+  "version": 1,
+  "description": "Curated model parameter knowledge base for update_launchers.py. Sources: official vendor/community docs (verified=official), local measurements (verified=measured), community reports (verified=community). Match rules: all 'match' substrings (lowercase) must appear in the model dir name.",
+  "_disclaimer": "'verified: official' source URLs were recorded from vendor docs at capture time and are NOT re-verified by this skill. Before relying on a value, confirm the URL still resolves and matches; 'measured' entries are local benchmark results (hardware-dependent, use as a reference point, not a guarantee).",
+  "profiles": [
+    {
+      "id": "gemma4-26b-a4b-qat",
+      "match": [
+        "gemma-4-26b",
+        "qat"
+      ],
+      "family": "gemma",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "tool_calling_sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "ctx_max": 262144,
+      "ctx_recommend": 65536,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0",
+        "note": "QAT sensitive - keep q8_0, do not lower to q4"
+      },
+      "quant_note": "UD-Q4_K_XL is the ONLY official QAT quant (higher precisions degrade accuracy)",
+      "weights_gb": 14.2,
+      "mtp": {
+        "draft_pattern": "gemma-4-26B-A4B",
+        "spec_draft_n_max": 2,
+        "n_max_range": [
+          1,
+          6
+        ],
+        "memory_headroom_gb": 2
+      },
+      "thinking": {
+        "enable_arg": "--chat-template-kwargs \"{\\\"enable_thinking\\\":false}\"",
+        "note": "Windows PowerShell needs the escaped form"
+      },
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/models/gemma-4/qat.md",
+          "date": "2026-08-16",
+          "verified": "official"
+        },
+        {
+          "url": "https://unsloth.ai/docs/models/mtp.md",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ],
+      "notes": [
+        "MoE 4B active - 128 experts; official temp 1.0/top-p 0.95/top-k 64",
+        "needs partial offload on 16GB VRAM at 64K"
+      ],
+      "moe": {
+        "is_moe": true,
+        "active_b": 4,
+        "start_ratio": 0.57,
+        "start_ratio_source": "user measured 17/30 layers -> 48-52 t/s on 16GB (2026-09-12)",
+        "experts": null,
+        "expert_bytes_per_layer_mib": 408.4,
+        "non_expert_bytes_gib": 1.29,
+        "expert_share_pct": 90.3,
+        "per_layer_spread_pct": 0.0,
+        "vram_budget_16gb": {"spare_min_mib": 3072, "min_decode_tps": 35, "source": "user rule 2026-09-13"},
+        "verified": true,
+        "source": "GGUF tensor table 2026-09-13 + user ladder 2026-09-12",
+        "note": "experts/active_b are read from GGUF metadata; expert_bytes_per_layer / non_expert_bytes / expert_share come from the GGUF tensor table (read_gguf_tensors) and are the FALLBACK only - at runtime the live table wins, because two checkpoints of the same arch differ (408 vs 481 MiB/layer here). start_ratio seeds estimate_ncpu_moe(); --tune-sweep confirms it."
+      }
+    },
+    {
+      "id": "gemma4-26b-a4b",
+      "match": [
+        "gemma-4-26b"
+      ],
+      "family": "gemma",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "tool_calling_sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "ctx_max": 262144,
+      "ctx_recommend": 65536,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0"
+      },
+      "weights_gb": 16,
+      "mtp": {
+        "draft_pattern": "gemma-4-26B-A4B",
+        "spec_draft_n_max": 2,
+        "n_max_range": [
+          1,
+          6
+        ],
+        "memory_headroom_gb": 2
+      },
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/models/gemma-4.md",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ],
+      "notes": [
+        "4-bit needs 16-18GB total memory; QAT version fits 15GB"
+      ],
+      "moe": {
+        "is_moe": true,
+        "active_b": 4,
+        "start_ratio": 0.57,
+        "start_ratio_source": "user measured 17/30 layers -> 47-48 t/s on the HauhauCS uncensored build (2026-09-12)",
+        "experts": null,
+        "expert_bytes_per_layer_mib": 481.0,
+        "non_expert_bytes_gib": 1.54,
+        "expert_share_pct": 90.2,
+        "per_layer_spread_pct": 17.1,
+        "vram_budget_16gb": {"spare_min_mib": 3072, "min_decode_tps": 35, "source": "user rule 2026-09-13"},
+        "verified": true,
+        "source": "GGUF tensor table 2026-09-13 + user ladder 2026-09-12",
+        "note": "Same architecture as the QAT profile but a different checkpoint and ~18% more expert bytes per layer - do not copy numbers between the two. per_layer_spread_pct is the (max-min)/max between layers; it is why the budget walks the real cumulative curve instead of N x mean."
+      }
+    },
+    {
+      "id": "gemma4-12b-qat",
+      "match": [
+        "gemma-4-12b",
+        "qat"
+      ],
+      "family": "gemma",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "tool_calling_sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "ctx_max": 262144,
+      "ctx_recommend": 131072,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0",
+        "note": "QAT sensitive - keep q8_0"
+      },
+      "quant_note": "UD-Q4_K_XL is the ONLY official QAT quant",
+      "weights_gb": 6.72,
+      "mtp": {
+        "draft_pattern": "gemma-4-12b",
+        "spec_draft_n_max": 2,
+        "n_max_range": [
+          1,
+          6
+        ],
+        "memory_headroom_gb": 2
+      },
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/models/gemma-4/qat.md",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ]
+    },
+    {
+      "id": "gemma4-12b",
+      "match": [
+        "gemma-4-12b"
+      ],
+      "family": "gemma",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "tool_calling_sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "ctx_max": 262144,
+      "ctx_recommend": 131072,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0"
+      },
+      "weights_gb": 7,
+      "mtp": {
+        "draft_pattern": "gemma-4-12b",
+        "spec_draft_n_max": 2,
+        "n_max_range": [
+          1,
+          6
+        ],
+        "memory_headroom_gb": 2
+      },
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/models/gemma-4.md",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ],
+      "notes": [
+        "unified text+image+audio"
+      ]
+    },
+    {
+      "id": "gemma4-e4b",
+      "match": [
+        "gemma-4-e4b"
+      ],
+      "family": "gemma",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "tool_calling_sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "ctx_max": 131072,
+      "ctx_recommend": 131072,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0",
+        "note": "QAT variant is KV sensitive"
+      },
+      "weights_gb": 5.5,
+      "mtp": {
+        "draft_pattern": "gemma-4-E4B",
+        "spec_draft_n_max": 2,
+        "n_max_range": [
+          1,
+          6
+        ],
+        "memory_headroom_gb": 2
+      },
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/models/gemma-4.md",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ],
+      "notes": [
+        "dense + PLE, audio/image supported"
+      ]
+    },
+    {
+      "id": "qwen36-27b-mtp",
+      "match": [
+        "qwen3.6-27b",
+        "mtp"
+      ],
+      "family": "qwen",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0
+      },
+      "sampling_coding": {
+        "temp": 0.6
+      },
+      "sampling_nonthinking": {
+        "temp": 0.7,
+        "top_p": 0.8,
+        "top_k": 20,
+        "presence_penalty": 1.5,
+        "min_p": 0.0
+      },
+      "tool_calling_sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 20
+      },
+      "ctx_max": 131072,
+      "ctx_recommend": 65536,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0",
+        "note": "DeltaNet hybrid - tiny KV, weights dominate VRAM"
+      },
+      "mtp": {
+        "builtin": true,
+        "no_model_draft": true,
+        "spec_draft_n_max": 2,
+        "memory_headroom_gb": 2
+      },
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/models/mtp.md",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ],
+      "notes": [
+        "built-in MTP heads - do NOT pass --model-draft",
+        "64 layers: 48 gated delta + 16 attention (measured locally)"
+      ]
+    },
+    {
+      "id": "qwen36-27b",
+      "match": [
+        "qwen3.6-27b"
+      ],
+      "family": "qwen",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0
+      },
+      "sampling_nonthinking": {
+        "temp": 0.7,
+        "top_p": 0.8,
+        "top_k": 20,
+        "presence_penalty": 1.5,
+        "min_p": 0.0
+      },
+      "ctx_max": 131072,
+      "ctx_recommend": 65536,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0"
+      },
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/models/mtp.md",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ]
+    },
+    {
+      "id": "qwen38-27b",
+      "match": [
+        "qwen3.8-27b"
+      ],
+      "family": "qwen",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0
+      },
+      "sampling_nonthinking": {
+        "temp": 0.7,
+        "top_p": 0.8,
+        "top_k": 20,
+        "presence_penalty": 1.5,
+        "min_p": 0.0
+      },
+      "tool_calling_sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 20
+      },
+      "ctx_max": 262144,
+      "ctx_recommend": 65536,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0"
+      },
+      "mtp": {
+        "builtin": true,
+        "no_model_draft": true,
+        "spec_draft_n_max": 2,
+        "memory_headroom_gb": 2
+      },
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/models/qwen3.8#run-qwen3.8-in-llama.cpp",
+          "date": "2026-08-28",
+          "verified": "official"
+        }
+      ],
+      "notes": [
+        "qwen35 arch 65 layers (blk.64 MTP-only); built-in MTP head - do NOT pass --model-draft",
+        "3-bit; --fit on --fit-ctx 65536 recommended on 16GB",
+        "measured weights (2026-08-29): Q3_K_XL 13.15GB / IQ3_S 12.04GB"
+      ]
+    },
+    {
+      "id": "qwen36-35b-a3b",
+      "match": [
+        "qwen3.6",
+        "35b",
+        "a3b"
+      ],
+      "family": "qwen",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 20
+      },
+      "tool_calling_sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 20
+      },
+      "ctx_max": 262144,
+      "ctx_recommend": 65536,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0",
+        "note": "256-expert MoE; q8_0 KV keeps 128K affordable on 16GB"
+      },
+      "moe": {
+        "is_moe": true,
+        "active_b": 3,
+        "experts_hint": 256,
+        "start_ratio": 0.75,
+        "start_ratio_source": "user measured 30/41 layers -> 47 t/s and 37/41 -> 48 t/s on the sibling UD-Q4_K_XL build (2026-09-12)",
+        "expert_bytes_per_layer_mib": 517.8,
+        "non_expert_bytes_gib": 1.58,
+        "expert_share_pct": 92.8,
+        "per_layer_spread_pct": 31.4,
+        "vram_budget_16gb": {"spare_min_mib": 3072, "min_decode_tps": 35, "source": "user rule 2026-09-13"},
+        "verified": true,
+        "source": "GGUF tensor table 2026-09-13 + user ladder 2026-09-12",
+        "note": "layers/experts are always read from GGUF metadata, not from here. n-cpu-moe is derived by estimate_ncpu_moe(). The largest spread of the four local MoE checkpoints (31.4%): mid layers alternate 432/498 MiB and the LAST SIX layers carry 630 MiB each, so the cumulative curve matters most here - N x mean would misplace the wall by ~1 GiB at the safe end."
+      },
+      "quant_note": "Q4_K_XL / Q4_K_P both observed locally; Q4_K_P is the 'P' variant (same Q4_K family)",
+      "weights_gb": 21.9,
+      "notes": [
+        "MoE 256 experts / 3B active - MUST keep expert weights off the GPU on 16GB",
+        "n-cpu-moe is mandatory for this family; the generic -ngl knob is the wrong lever",
+        "sampling values are the Qwen3.5/3.6 family defaults and are NOT yet verified for this exact checkpoint - confirm during plan v3 TASK-077 research"
+      ],
+      "sources": [
+        {
+          "url": "local GGUF metadata (qwen35moe, block_count=40..41, expert_count=256, context_length=262144)",
+          "date": "2026-09-12",
+          "verified": "measured"
+        },
+        {
+          "url": "https://unsloth.ai/docs/models/mtp.md",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ],
+      "verified": "partial"
+    },
+    {
+      "id": "qwen35",
+      "match": [
+        "qwen3.5"
+      ],
+      "family": "qwen",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 20
+      },
+      "tool_calling_sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 20
+      },
+      "ctx_max": 262144,
+      "ctx_recommend": 131072,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0"
+      },
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/models/mtp.md",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ]
+    },
+    {
+      "id": "qwen3-coder-next",
+      "match": [
+        "qwen3-coder-next"
+      ],
+      "family": "qwen",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 40
+      },
+      "tool_calling_sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 40,
+        "min_p": 0.01
+      },
+      "ctx_max": 262144,
+      "ctx_recommend": 131072,
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/basics/tool-calling-guide-for-local-llms",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ]
+    },
+    {
+      "id": "glm-47",
+      "match": [
+        "glm-4.7"
+      ],
+      "family": "glm",
+      "sampling": {
+        "temp": 0.7,
+        "top_p": 1.0,
+        "top_k": -1
+      },
+      "tool_calling_sampling": {
+        "temp": 0.7,
+        "top_p": 1.0,
+        "top_k": -1
+      },
+      "ctx_max": 131072,
+      "ctx_recommend": 32768,
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/basics/tool-calling-guide-for-local-llms",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ]
+    },
+    {
+      "id": "devstral-2",
+      "match": [
+        "devstral"
+      ],
+      "family": "other",
+      "sampling": {
+        "temp": 0.15,
+        "top_p": 1.0,
+        "top_k": -1,
+        "min_p": 0.01
+      },
+      "tool_calling_sampling": {
+        "temp": 0.15,
+        "top_p": 1.0,
+        "top_k": -1,
+        "min_p": 0.01
+      },
+      "ctx_max": 131072,
+      "ctx_recommend": 32768,
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/basics/tool-calling-guide-for-local-llms",
+          "date": "2026-08-16",
+          "verified": "official"
+        }
+      ]
+    },
+    {
+      "id": "lfm25-8b",
+      "match": [
+        "lfm2.5"
+      ],
+      "family": "lfm",
+      "sampling": {
+        "temp": 0.2,
+        "top_k": 80,
+        "repeat_penalty": 1.05,
+        "top_p": 0.95
+      },
+      "tool_calling_sampling": {
+        "temp": 0.2,
+        "top_k": 80,
+        "repeat_penalty": 1.05,
+        "top_p": 0.95
+      },
+      "ctx_max": 131072,
+      "ctx_recommend": 131072,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0"
+      },
+      "sources": [
+        {
+          "url": "local-benchmark-2026-08",
+          "date": "2026-08-09",
+          "verified": "measured"
+        }
+      ],
+      "notes": [
+        "MoE 32 experts/4 active; tool calls OK (llama.cpp issue #26658: avoid escaped quotes in tool args)"
+      ]
+    },
+    {
+      "id": "qwenpaw-9b",
+      "match": [
+        "qwenpaw"
+      ],
+      "family": "qwen",
+      "sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 20
+      },
+      "tool_calling_sampling": {
+        "temp": 1.0,
+        "top_p": 0.95,
+        "top_k": 20
+      },
+      "ctx_max": 262144,
+      "ctx_recommend": 131072,
+      "kv": {
+        "k": "q8_0",
+        "v": "q8_0",
+        "note": "qwen35 hybrid - tiny KV"
+      },
+      "mtp": {
+        "builtin": true,
+        "no_model_draft": true,
+        "spec_draft_n_max": 2
+      },
+      "sources": [
+        {
+          "url": "local-benchmark-2026-08",
+          "date": "2026-08-09",
+          "verified": "measured"
+        }
+      ],
+      "notes": [
+        "heretic-MTP variant has built-in MTP head; +74% on CPU measured"
+      ]
+    },
+    {
+      "id": "phi-4-mini",
+      "match": [
+        "phi-4-mini"
+      ],
+      "family": "phi",
+      "sampling": {
+        "temp": 0.7,
+        "top_p": 0.95,
+        "top_k": 20
+      },
+      "tool_calling_sampling": null,
+      "ctx_max": 131072,
+      "ctx_recommend": 32768,
+      "sources": [
+        {
+          "url": "local-benchmark-2026-08",
+          "date": "2026-08-03",
+          "verified": "measured"
+        }
+      ],
+      "notes": [
+        "tool calling NOT supported (template limit, measured)"
+      ]
+    },
+    {
+      "id": "gpt-oss-20b",
+      "match": [
+        "gpt-oss"
+      ],
+      "family": "other",
+      "sampling": {
+        "temp": 0.7,
+        "top_p": 0.95,
+        "top_k": 20
+      },
+      "ctx_max": 131072,
+      "ctx_recommend": 32768,
+      "sources": [
+        {
+          "url": "https://unsloth.ai/docs/models/gpt-oss-how-to-run-and-fine-tune",
+          "date": "2026-08-16",
+          "verified": "unverified"
+        }
+      ],
+      "notes": [
+        "MoE 20B/3.6B active; sampling not verified - community defaults"
+      ]
+    },
+    {
+      "id": "glm-ocr",
+      "match": [
+        "glm-ocr"
+      ],
+      "family": "glm",
+      "sampling": {
+        "temp": 0.7,
+        "top_p": 0.95,
+        "top_k": 20
+      },
+      "tool_calling_sampling": null,
+      "ctx_max": 16384,
+      "ctx_recommend": 16384,
+      "kv": {
+        "k": "q4_0",
+        "v": "q4_0",
+        "note": "visual OCR, KV q4_0 measured to fit 16GB"
+      },
+      "sources": [
+        {
+          "url": "local-benchmark-2026-08",
+          "date": "2026-08-03",
+          "verified": "measured"
+        }
+      ]
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 > **适用**: 想给一个**没有 MTP head 的微调模型**（尤其社区无审查微调）加上投机解码能力，
 > 而官方同基座量化版**自带 head**。
 > **实测结果**: 解码 **64.28 → 86.51 t/s（+34.6%）**，acceptance **0.736**（16 GiB 卡，Qwen3.6-35B-A3B 系）
-> **首次验证**: 2026-09-13 | llama.cpp build 10713 | 参考实现 `plan/_mtp_graft.py`
+> **首次验证**: 2026-09-13 | llama.cpp build 10713 | 参考实现 `<llama-cpp-dir>\plan\_mtp_graft.py`
 
 ---
 
@@ -209,7 +209,8 @@ llama-server -m <grafted.gguf> ... --spec-type draft-mtp --spec-draft-n-max 2
 
 ## 7. 参考实现
 
-`plan/_mtp_graft.py`（纯标准库）：
+实现位于项目仓库：`<llama-cpp-dir>\plan\_mtp_graft.py`（纯标准库，可独立运行）。
+**本 `references/` 目录不含该脚本的副本** —— 它是仓库内工具，路径以 [`../INDEX.md`](../INDEX.md) §5.5 为准。
 - `--check`（默认）：只读，报告 head 字节数、磁盘空间，以及**结构性兼容性结论**
 - `--go --out <path>`：写入 + **写后自检**（`--go` 必须带 `--out`；`--check`/`--go` 互斥）
 - **兼容性是一道闸门，不是一份报告。** 不满足下列任一条即**拒绝写入**

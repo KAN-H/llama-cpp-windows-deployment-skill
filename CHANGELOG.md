@@ -2,6 +2,37 @@
 
 llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）版本变更记录。
 
+## [v3.6.0] - 2026-09-13
+
+### Changed — `references/` 目录重整（本次主要变更）
+- **重组为三类子目录**（用 `git mv` 迁移，**历史完整保留**，全部以 `R` 状态记录）：
+  - `references/sessions/` —— 6 份按日期的会话经验（**历史快照，正文不回改**）
+  - `references/guides/` —— 2 份面向操作的专题手册（`mtp-head-grafting.md`、`20260913-moe-offload-community-research.md`）
+  - `references/assets/` —— 7 个可复用资源（5 个启动器模板 + 2 个配置模板）
+- **新增 `references/INDEX.md`**（快速索引）：三类文档的区别与"什么时候读"、**§5 权威代码路径表**（逐条实测校验）、
+  §6 已废弃/已归档路径、§7 维护规范（新文档怎么写、路径改动必须同步哪两张表、双副本怎么同步）
+- `SKILL.md` 头部新增 references 索引导航
+
+### Fixed — 代码文件索引路径
+- `guides/mtp-head-grafting.md`：`plan/_mtp_graft.py` → 明确为 `<llama-cpp-dir>\plan\_mtp_graft.py`，
+  并声明本目录不含副本
+- `guides/20260913-moe-offload-community-research.md`：`update_launchers.py` → `launcher/update_launchers.py`
+- 6 份会话文档统一加**索引横幅**，指向 `INDEX.md` §5，避免读者照抄历史路径
+- `sessions/20260913`：改为指向已移动手册的**相对链接**
+- `SKILL.md` 11 条 + `README.md` 16 条链接全部更新（含显示文本）；**两副本链接完整性实测 `broken_links=0`**
+
+### Fixed — 技能副本陈旧（`.agents` 与发布副本）
+- `references/assets/model-profiles.json` 从仓库同步：**16 → 18 个 profile**，补入 **3 个结构化 `moe` 块**
+  （`gemma4-26b-a4b-qat` / `gemma4-26b-a4b` / `qwen36-35b-a3b`）；保留既有 `_disclaimer`；
+  无 BOM、CRLF 一致、无敏感路径
+- 顺带修正 `.agents` 副本中 `gemma4-menu-scripts.bat` / `qwen-scripts.bat` 的陈旧版本
+
+### Notes
+- **内容零丢失已证明**：用排序多重集比对迁移前后各文档，5 份完全一致，
+  另 3 份的差异**仅是本次有意修正的 3 条路径行**
+- 双副本仍只有 3 份历史文档存在**有意的脱敏差异**（`20260803` / `20260805` / `20260829`），
+  未同步新增差异
+
 ## [v3.5.1] - 2026-09-13
 
 ### Fixed
