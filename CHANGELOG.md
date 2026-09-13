@@ -2,6 +2,30 @@
 
 llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）版本变更记录。
 
+## [v3.5] - 2026-09-13
+
+### Added
+- **SKILL.md 新增第五章「MoE 显存预算与卸载」**（此前技能内 `n-cpu-moe` 出现 **0 次**）：
+  - §5.1 **`--fit` 与 `--n-cpu-moe` 互斥**（`--n-cpu-moe` 编译成 `-ot` 覆盖 ⇒ `common_fit_params()` 放弃 fit）⇒ MoE 条目上的 `--fit on` **从未生效**，且 **MoE 模型没有自动降级兜底**
+  - §5.2 显存预算方程（张量表直读 `W_non`/`E_layer`；专家字节**按层非均匀**，必须用真实累积曲线而非层数×均值）
+  - §5.3 **`-b`/`-ub` 必须成对提升**（`n_ubatch` 静默 clamp）；实测 prefill **955 → 1,867 t/s（+95%）**，解码不变
+  - §5.4 `--load-mode none` 是**性能修复**而非废弃改名（mmap + `n-cpu-moe` 掉 60% prefill）
+  - §5.5 `n-cpu-moe` 阶梯实测参考 + 「结论必须标注测量 ctx」
+  - §5.6 **FND-064**：`.bat` 与 `ini` 两套生成路径必须同步
+- **新增 `references/mtp-head-grafting.md`（内建 MTP head 嫁接手册）**：完整可照做的 GGUF 张量级手术流程 —— 适用判定、布局与 4 处必改、**四个陷阱**（KV 取 target / 对齐填充 / `nextn_predict_layers` / 写后自检）、7 步验证协议、**显存代价 = 权重字节 × 3**、新目录落地注意事项；参考实现 `plan/_mtp_graft.py`
+  - 实测：解码 **64.28 → 86.51 t/s（+34.6%）**，acceptance **0.736**
+- **新增 `references/20260913-session-experience.md`**：FND-066 互斥机制、`-ub` clamp 陷阱、`--load-mode` 性能洞、GGUF 张量表解析技巧（按长度 seek 跳 KV / 两种专家命名形态 / 大小校验查不出分类错误）、回归方法论（负向对照 `--self-test`、**变异测试**、`__pycache__` 假失败陷阱、**两个真实点不约束规则 → 补阈值边界用例**）、告警自身会误报、**大体积操作前必须讲清依赖关系**、GitNexus 未索引时的等价影响分析、提交卫生（重组与行为改动分离 / `R100`）
+- SKILL.md §一 新增触发词行：内置 MTP head / 嫁接、MoE 卸载、prefill 提速、参数一致性
+- SKILL.md §六 新增「内置 MTP head（`nextn_predict_layers`）」小节 + 嫁接手册指引
+- SKILL.md 参数速查表新增 `--load-mode` 与 `--batch-size` + `--ubatch-size` 成对行
+
+### Fixed
+- SKILL.md 参数速查表 `--no-mmap` 废弃行 → `--load-mode none`，并标注 60% prefill 性能洞
+- SKILL.md §七 Troubleshooting 新增 7 行：`--fit` 无效、`-ub` 无效、override 不同步、两路径不一致、MTP 不加速、嫁接结果错、`__pycache__` 假失败
+
+### Notes
+- 新增内容中的路径**统一使用占位符**（`<models-dir>` / `<llama-cpp-dir>`），使发布副本与 `.agents` 部署副本**内容一致**，消除历史遗留的脱敏差异维护成本
+
 ## [v3.4] - 2026-08-29
 
 ### Added

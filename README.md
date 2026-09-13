@@ -10,7 +10,7 @@
 
 | File | Description |
 |------|-------------|
-| [`SKILL.md`](./SKILL.md) | Main skill file — activated by Agent on demand (v3.2) |
+| [`SKILL.md`](./SKILL.md) | Main skill file — activated by Agent on demand (v3.5) |
 | [`references/gemma4-menu-scripts.bat`](./references/gemma4-menu-scripts.bat) | Full 10-option Gemma 4 launch menu (Q5/Q8, QAT, MTP, 26B-A4B) |
 | [`references/qwen-scripts.bat`](./references/qwen-scripts.bat) | Qwen 3-tier deployment scripts (bare / external draft / built-in MTP) |
 | [`references/preset-templates.json`](./references/preset-templates.json) | Preset templates for 7 deployment scenarios |
@@ -22,6 +22,10 @@
 | [`references/20260805-session-experience.md`](./references/20260805-session-experience.md) | Reasoning control (anti-deadloop, `--reasoning-budget`) & GBK safe editing |
 | [`references/20260806-session-experience.md`](./references/20260806-session-experience.md) | 26B MTP draft: official Q8_0 vs third-party Q4_0 diagnosis |
 | [`references/20260816-session-experience.md`](./references/20260816-session-experience.md) | `--fit` auto-offload (7x speedup), CPU toolcall new models, GBK recovery SOP |
+| [`references/20260829-session-experience.md`](./references/20260829-session-experience.md) | Qwen3.8-27B tuning, long-session validation SOP, updater fixes, WSL/VS Code `ECONNREFUSED` |
+| [`references/20260913-moe-offload-community-research.md`](./references/20260913-moe-offload-community-research.md) | MoE offload: community state of the art, per-layer expert skew, the `-ub` prefill lever |
+| [`references/20260913-session-experience.md`](./references/20260913-session-experience.md) | `--fit` ⟂ `--n-cpu-moe`, `-ub` clamping, GGUF tensor-table parsing, regression methodology |
+| [`references/mtp-head-grafting.md`](./references/mtp-head-grafting.md) | **Built-in MTP head grafting** — full GGUF surgery, four traps, verification protocol |
 | [`scripts/detect.ps1`](./scripts/detect.ps1) | Automated environment diagnostics (PowerShell) |
 | [`scripts/detect.py`](./scripts/detect.py) | Cross-platform diagnostics (Python 3.7+, Windows/Linux/macOS) |
 
@@ -38,7 +42,7 @@
 ## 🧰 Prerequisites
 
 - **Windows 10/11** (64-bit) with or without WSL2
-- **llama.cpp** precompiled package (`b10056 – b10158+`)
+- **llama.cpp** precompiled package (`b10056 – b10713+`)
 - **NVIDIA GPU** with driver ≥ 610.47 (for GPU offloading)
 - **GGUF models** — standard, QAT-UD, or MTP variants
 - **PowerShell + CMD** environment
@@ -65,7 +69,6 @@ Or run the diagnostics script first:
 This skill is designed as a **VS Code Agent Skill** (`.github/skills/<name>/SKILL.md`). Place it in your project's skill directory, and the Agent will auto-discover it for relevant tasks.
 
 **Place at**: `.github/skills/llama-cpp-windows-deployment/SKILL.md`
-Apache License 2.0 — See [LICENSE](./LICENSE) for details.
 
 ## 🏷️ Topics
 
@@ -74,9 +77,5 @@ This repo is tagged with topics such as `llama-cpp`, `local-llm`, `agent-skills`
 ---
 
 **Built from real-world RTX 5060 Ti 16GB + Intel U7 270K deployment experience.**
-For version history, see [CHANGELOG](./CHANGELOG.md).
-MIT — See [LICENSE](./LICENSE) for details.
 
----
-
-**Built from real-world RTX 5060 Ti 16GB + Intel U7 270K deployment experience.**
+For version history, see [CHANGELOG](./CHANGELOG.md). Apache License 2.0 — see [LICENSE](./LICENSE).
