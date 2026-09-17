@@ -653,10 +653,12 @@ N = ceil( (W_non + KV + mmproj + draft + compute_buf − (VRAM − margin)) / E_
 
 - [ ] 1. 更新 SKILL.md 头部版本行（`**版本**: vX.Y`）与更新日期/一句话摘要
 - [ ] 2. 在 `CHANGELOG.md` 顶部追加版本条目（Added/Changed/Fixed 三段）
-- [ ] 3. 同步 `.agents` 部署副本 —— **只同步技能载荷**：`SKILL.md`、`references/`、`scripts/`。
-       `docs/` 与 `scripts/mtp-graft-package/` 不同步（见 `references/INDEX.md` §7）
-- [ ] 4. 记录 one-line reason（可选写入 repo memory）
-- [ ] 5. **验证副本逐字节一致**（载荷范围）；若新文档引入了本机绝对路径，先改占位符再同步
+- [ ] 3. 同步 `.agents` 部署副本 —— **只同步技能载荷**：`SKILL.md`、`CHANGELOG.md`、`README.md`、
+       `LICENSE`、`references/`、`scripts/`（见 `references/INDEX.md` §7「发布边界」）
+- [ ] 4. **确认没有开发过程材料混进公开仓库** —— `docs/` 与 `scripts/mtp-graft-package/`
+       属维护者本地，**既不同步也不提交**；提交前看清暂存集
+- [ ] 5. 记录 one-line reason（可选写入 repo memory）
+- [ ] 6. **验证副本逐字节一致**（载荷范围）；若新文档引入了本机绝对路径，先改占位符再同步
 
 > ⚠️ **禁止**往技能载荷里写本机绝对路径（`D:\...`）。技能要能「换一台机器照样跑」——
 > 部署侧路径一律用 `<llama-cpp-dir>` / `<models-dir>` 这类占位符。

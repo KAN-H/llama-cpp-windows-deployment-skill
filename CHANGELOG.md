@@ -4,8 +4,8 @@ llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）�
 
 ## [未发布 — 目标 v3.7.0] - 2026-09-17
 
-> 项目自洽化改造进行中。方案与进度记录在**源码仓库**的 `docs/merge-plan.md` ——
-> `docs/` 是项目文档、**不属于技能载荷**，所以安装副本（`~/.agents/`）里没有这个目录。
+> 项目自洽化改造进行中。方案与进度记录在**维护者本地**的 `docs/merge-plan.md` ——
+> `docs/` 是开发过程材料、**不属于技能载荷**，不在公开仓库里。
 > 本节只记录**已经落到 `main`** 的内容。**尚未打标签** —— v3.7.0 将在 Phase F 统一发布。
 
 ### Added — `scripts/mtp_graft.py`：通用 MTP head 嫁接套件
@@ -26,18 +26,25 @@ llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）�
 - `--preset qwen36-35b-a3b` 一键复现本次嫁接；`--go` **拒绝覆盖已存在的输出**
 - **新增 `scripts/tests/test_mtp_graft.py`**：17 例（1 正向 + 16 负向），合成夹具亚秒跑完，不需真模型
 
+### Changed — 公开边界收紧：开发过程材料不再进公开仓库
+本技能是一个**可独立分发的技能**，不是本项目开发过程的记录。以下内容**留在维护者本地**，
+既不进公开仓库、也不进 `.agents` 安装副本：
+
+- `docs/` —— 执行计划、各阶段门禁报告、合并前分析
+- `scripts/mtp-graft-package/` —— 一次性考古材料（复盘、原始脚本副本、A/B 实测数据）
+- `docs/video/` —— 说明动画三件套，已移至项目目录**之外**独立存放
+- 原始会话转录（自始至终 gitignore）
+
+判定标准只有一句：**换一个用户、换一台机器，它还有用吗？**
+技能用户需要的是「怎么部署、怎么排障、怎么嫁接」，而不是「我们当时怎么搬的家」。
+
+> 同时重写了历史（`filter-branch` + force push），旧提交中的副本已不可达。
+> 仓库体积也因此从 63 个受跟踪文件降至现下的载荷集。
+
 ### Verified — 迁移等价性（逐字节）
 用新工具对 2026-09-13 那次嫁接的**同一对模型**重跑，产物与原工具 **SHA-256 完全相同**：
 `5AF97A49D3CC86866CC9C101C72A584803A6FE3E7DD8C5196DEEE15F7072D272`（22.31 GiB）。
 即改写是**保真等价**，不是「看起来能用」。
-
-### Added — `scripts/mtp-graft-package/`：本次嫁接的完整过程物料
-复盘（含两个 bug 与 `nextn_predict_layers` 的发现过程）、对比分析表、会话导航图、
-四个脚本原始副本、A/B 实测数据、配置链路摘录。**已全量脱敏**（凭据 → 环境变量、
-本机路径 → 占位符、换行 → CRLF），原始转录 gitignore 仅留本机。
-
-### Added — `docs/`：项目文档（非技能载荷）
-`merge-plan.md`（边界、10 条决策、10 条硬伤、阶段与门禁）、`README.md`、Stage 1 门禁报告。
 
 ### Fixed — 手册与索引
 - `guides/mtp-head-grafting.md` §7 **重写**：指向 `scripts/mtp_graft.py`，列全 12 条闸门、
