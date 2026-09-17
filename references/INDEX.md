@@ -38,6 +38,7 @@ references/
 | [`20260816`](./sessions/20260816-session-experience.md) | `--fit` 自动分层（7 倍提速）、新 CPU 模型、GBK 恢复 SOP | 51K 上下文 10.6 → 72-93 t/s 的完整证据链 | 长上下文降速 |
 | [`20260829`](./sessions/20260829-session-experience.md) | Qwen3.8-27B 极限优化、更新器工程修复、WSL/VS Code 对接 | `ECONNREFUSED` 双根因排查 SOP | 配长上下文、VS Code 连不上 |
 | [`20260913`](./sessions/20260913-session-experience.md) | MoE 参数智能化、回归方法论、MTP 嫁接 | **新守卫必须先在已知可用样本上跑**（否则守卫自己成为 bug） | 加模型、写断言、做嫁接 |
+| [`20260917`](./sessions/20260917-skill-dev-provenance.md) | **项目内迁溯源**：生成器/hub 搬进仓库、参数化契约、保真验证 | **要改一个产出过真实产物的工具，先固化它的产物基线** | 想知道 `scripts/launcher_gen/` 从哪来、凭什么信它 |
 
 ---
 
@@ -146,11 +147,17 @@ references/
 | 路径 | 用途 |
 |---|---|
 | [`scripts/mtp_graft.py`](../scripts/mtp_graft.py) | **MTP head 嫁接的权威实现**：`--check` 只读 / `--go --out` 写入 + 写后自检 / `--audit` 列 per-layer KV 数组 |
+| [`scripts/_mtp_verify.py`](../scripts/_mtp_verify.py) | 嫁接 A/B 验证（baseline vs `--spec-type draft-mtp`，同会话对比） |
+| [`scripts/_ub_probe.py`](../scripts/_ub_probe.py) | batch / ubatch 探针（`-ub` 单独改无效的实证工具） |
+| [`scripts/launcher_gen/update_launchers.py`](../scripts/launcher_gen/update_launchers.py) | **启动器生成器**：扫描 → 渲染 3 个菜单 `.bat` + `models-config.ini`；读 `LAUNCHER_DIR` / `CHAT_DIR` |
+| [`scripts/launcher_gen/llama_hub.py`](../scripts/launcher_gen/llama_hub.py) | 交互式门面：菜单 / `--guide` / `--diagnose` / `--write-docs` |
+| [`scripts/launcher_gen/README.md`](../scripts/launcher_gen/README.md) | **冷启动指南** + 注册表 schema + 回归模式说明 ← 新用户从这里开始 |
 | [`scripts/detect.ps1`](../scripts/detect.ps1) | Windows 环境自检（GPU / 驱动 / VRAM / 模型 / 服务） |
 | [`scripts/detect.py`](../scripts/detect.py) | 同上，跨平台 Python 版 |
 | [`scripts/tests/test_mtp_graft.py`](../scripts/tests/test_mtp_graft.py) | 嫁接闸门测试（17 例：1 正向 + 16 负向；不需真模型，亚秒完成） |
 
 > 本节的路径是 §5 里**唯一不指向 `<llama-cpp-dir>`** 的一组 —— 它们随技能本身发布，换台机器照常工作。
+> `launcher_gen/*` 需要两个环境变量（`LAUNCHER_DIR` / `CHAT_DIR`），见其 README。
 
 ---
 

@@ -112,40 +112,40 @@ goto menu
 
 :RUN_Q5MTP
 call :check_file "%Q5%" & call :check_file "%D12%"
-llama-server.exe -m "%Q5%" --model-draft "%D12%" --spec-type draft-mtp --spec-draft-n-max 2 -c 32768 -ngl 99 --gpu-layers-draft 60 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --no-mmap --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 120
+llama-server.exe -m "%Q5%" --model-draft "%D12%" --spec-type draft-mtp --spec-draft-n-max 2 -c 32768 -ngl 99 --gpu-layers-draft 60 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --load-mode none --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 120
 pause & goto menu
 
 :RUN_Q8MTP
 call :check_file "%Q8%" & call :check_file "%D12%"
-llama-server.exe -m "%Q8%" --model-draft "%D12%" --spec-type draft-mtp --spec-draft-n-max 2 -c 16384 -ngl 99 --gpu-layers-draft 50 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --no-mmap --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 120
+llama-server.exe -m "%Q8%" --model-draft "%D12%" --spec-type draft-mtp --spec-draft-n-max 2 -c 16384 -ngl 99 --gpu-layers-draft 50 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --load-mode none --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 120
 pause & goto menu
 
 :RUN_Q5B
-llama-server.exe -m "%Q5%" -c 65536 -ngl 99 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --no-mmap --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --timeout 120
+llama-server.exe -m "%Q5%" -c 65536 -ngl 99 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --load-mode none --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --timeout 120
 pause & goto menu
 
 :RUN_Q8B
-llama-server.exe -m "%Q8%" -c 65536 -ngl 99 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --no-mmap --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --timeout 120
+llama-server.exe -m "%Q8%" -c 65536 -ngl 99 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --load-mode none --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --timeout 120
 pause & goto menu
 
 :RUN_12B
 call :check_file "%Q4_12B%" & call :check_file "%MM_12B%"
-llama-server.exe -m "%Q4_12B%" --mmproj "%MM_12B%" -c 131072 -ngl 99 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --keep -1 --no-mmap --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 120
+llama-server.exe -m "%Q4_12B%" --mmproj "%MM_12B%" -c 131072 -ngl 99 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --keep -1 --load-mode none --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 120
 pause & goto menu
 
 :RUN_26B
 call :check_file "%Q4_26B%" & call :check_file "%MM_26B%"
-llama-server.exe -m "%Q4_26B%" --mmproj "%MM_26B%" -c 131072 -ngl 28 -fa on -np 1 -t 10 --batch-size 512 --cache-type-k q4_0 --cache-type-v q4_0 --keep -1 --no-mmap --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 300
+llama-server.exe -m "%Q4_26B%" --mmproj "%MM_26B%" -c 131072 -ngl 28 -fa on -np 1 -t 10 --batch-size 512 --cache-type-k q4_0 --cache-type-v q4_0 --keep -1 --load-mode none --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 300
 pause & goto menu
 
 :RUN_12B_MTP
 call :check_file "%Q4_12B%" & call :check_file "%D12%" & call :check_file "%MM_12B%"
-llama-server.exe -m "%Q4_12B%" --mmproj "%MM_12B%" --model-draft "%D12%" --spec-type draft-mtp --spec-draft-n-max 2 -c 65536 -ngl 99 --gpu-layers-draft 32 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --keep -1 --no-mmap --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 180
+llama-server.exe -m "%Q4_12B%" --mmproj "%MM_12B%" --model-draft "%D12%" --spec-type draft-mtp --spec-draft-n-max 2 -c 65536 -ngl 99 --gpu-layers-draft 32 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --keep -1 --load-mode none --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 180
 pause & goto menu
 
 :RUN_26B_MTP
 call :check_file "%Q4_26B%" & call :check_file "%D26%" & call :check_file "%MM_26B%"
-llama-server.exe -m "%Q4_26B%" --mmproj "%MM_26B%" --model-draft "%D26%" --spec-type draft-mtp --spec-draft-n-max 2 -c 32768 -ngl 99 --gpu-layers-draft 42 -fa on -np 1 -t 10 --batch-size 512 --cache-type-k q8_0 --cache-type-v q8_0 --keep -1 --no-mmap --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 180
+llama-server.exe -m "%Q4_26B%" --mmproj "%MM_26B%" --model-draft "%D26%" --spec-type draft-mtp --spec-draft-n-max 2 -c 32768 -ngl 99 --gpu-layers-draft 42 -fa on -np 1 -t 10 --batch-size 512 --cache-type-k q8_0 --cache-type-v q8_0 --keep -1 --load-mode none --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 180
 pause & goto menu
 
 :RUN_12B_MTP128
@@ -156,5 +156,5 @@ if %VM_TEST% lss 2000 (
     echo [ERROR] Need 2GB+ VRAM for 128K MTP, current %FREE_MB% MB
     pause & goto menu
 )
-llama-server.exe -m "%Q4_12B%" --mmproj "%MM_12B%" --model-draft "%D12%" --spec-type draft-mtp --spec-draft-n-max 2 -c 131072 -ngl 99 --gpu-layers-draft 32 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --keep -1 --no-mmap --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 180
+llama-server.exe -m "%Q4_12B%" --mmproj "%MM_12B%" --model-draft "%D12%" --spec-type draft-mtp --spec-draft-n-max 2 -c 131072 -ngl 99 --gpu-layers-draft 32 -fa on -np 1 -t 10 --batch-size 1024 --cache-type-k q8_0 --cache-type-v q8_0 --keep -1 --load-mode none --host 0.0.0.0 --port %PORT% --api-key "%API_KEY%" --cors-origins %CORS_ORIGINS% --temp %TEMP% --top-p %TOP_P% --repeat-penalty %REPEAT_PENALTY% --timeout 180
 pause & goto menu

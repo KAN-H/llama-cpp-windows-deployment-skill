@@ -857,7 +857,20 @@ def audit_registry(reg, chat, profiles):
 def extract_launcher(name):
     """Parse one launcher .bat into registry pieces (see schema above)."""
     script, enc = SPECS[name]
-    text, trailing = read_text(BASE / script, enc)
+    path = BASE / script
+    if not path.is_file():
+        # --extract rebuilds launcher-models.json FROM existing launcher files,
+        # so a machine that has none cannot be bootstrapped this way - which is
+        # the situation on every fresh install. Say that plainly instead of
+        # dying with a FileNotFoundError from three frames down.
+        raise SystemExit(
+            "[X] {} not found in {}\n"
+            "    --extract rebuilds launcher-models.json FROM existing launcher\n"
+            "    files, so it needs at least one to work from, and a fresh\n"
+            "    install has none. See scripts/launcher_gen/README.md for the\n"
+            "    cold-start path and the registry schema."
+            .format(script, BASE))
+    text, trailing = read_text(path, enc)
     lines = text.split("\r\n")
     if trailing and lines and lines[-1] == "":
         lines.pop()

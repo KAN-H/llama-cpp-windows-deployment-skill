@@ -32,7 +32,7 @@ llama-server.exe ^
   --batch-size 1024 ^
   --cache-type-k q8_0 ^
   --cache-type-v q8_0 ^
-  --no-mmap ^
+  --load-mode none ^
   --host 0.0.0.0 ^
   --port %PORT% ^
   --api-key %API_KEY% ^
@@ -68,7 +68,7 @@ llama-server.exe ^
   --batch-size 1024 ^
   --cache-type-k q8_0 ^
   --cache-type-v q8_0 ^
-  --no-mmap ^
+  --load-mode none ^
   --host 0.0.0.0 ^
   --port %PORT% ^
   --api-key %API_KEY% ^
@@ -102,7 +102,7 @@ llama-server.exe ^
   --batch-size 1024 ^
   --cache-type-k q8_0 ^
   --cache-type-v q8_0 ^
-  --no-mmap ^
+  --load-mode none ^
   --host 0.0.0.0 ^
   --port %PORT% ^
   --api-key %API_KEY% ^
