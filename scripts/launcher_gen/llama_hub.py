@@ -1054,6 +1054,10 @@ def write_models_md(state):
 
 def write_arch_md(state):
     rows, mtp_files = model_rows(state)
+    # 派生而不是写死：生成物描述的是**跑它的人的**部署，不是作者的机器
+    ini_path = Path((state["overrides"] or {}).get(
+        "ini_path") or (U.DEFAULT_CHAT / "models-config.ini"))
+    ini_shown = str(ini_path).replace("\\", "/")
     L = []
     L.append("# 启动器生态结构")
     L.append("")
@@ -1085,7 +1089,7 @@ def write_arch_md(state):
     L.append("  UPD -->|生成| G")
     L.append("  UPD -->|生成| Q")
     L.append("  UPD -->|生成| C")
-    L.append("  UPD -->|生成| INI[\"D:/dev/models/chat/models-config.ini\"]")
+    L.append("  UPD -->|生成| INI[\"{}\"]".format(ini_shown))
     L.append("  UPD -->|每次覆盖前| BK[\"launcher/backup/\"]")
     L.append("  UPD -->|dry-run| PV[\"launcher/backup/preview/\"]")
     L.append("  INI --> R")
@@ -1114,7 +1118,7 @@ def write_arch_md(state):
     L.append("| `launcher/start-Qwen-Launcher.bat` | GBK(936) | 无 | 中文界面文案 |")
     L.append("| `launcher/start-CPU-Toolcall-Launcher.bat` | ASCII | 无 | 纯 ASCII |")
     L.append("| `launcher/*.json` | UTF-8 | 无 | 无 BOM |")
-    L.append("| `D:/dev/models/chat/models-config.ini` | UTF-8 | 无 | 中文 `#` 注释 |")
+    L.append("| `{}` | UTF-8 | 无 | 中文 `#` 注释 |".format(ini_shown))
     L.append("")
     L.append("## 事实源优先级")
     L.append("")

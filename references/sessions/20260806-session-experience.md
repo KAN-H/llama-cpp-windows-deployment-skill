@@ -1,6 +1,7 @@
 # 2026-08-06 实战经验沉淀（26B+MTP 启动失败 invalid vector subscript 排查与修复）
 
-> 📁 **历史快照** —— 正文保持当时原貌、不回改；文中代码路径以 [`../INDEX.md`](../INDEX.md) §5 权威路径表为准。
+> 📁 **历史快照** —— 正文保持当时原貌、不回改；文中 `launcher/...` 这类相对路径指**当时的部署目录**。
+> 路径对照见 [`../INDEX.md`](../INDEX.md) §5B（部署侧参考布局）；技能自带工具见 §5A。
 
 > 来源：2026-08-06 会话「26B-QAT + MTP 菜单 8/17 启动报 invalid vector subscript 排查修复」
 > 硬件：RTX 5060 Ti 16GB + Intel U7 270K + 48GB DDR5 | llama.cpp b10158 (f87067841)

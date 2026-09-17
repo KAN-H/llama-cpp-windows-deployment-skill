@@ -4,7 +4,8 @@ llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）�
 
 ## [未发布 — 目标 v3.7.0] - 2026-09-17
 
-> 项目自洽化改造进行中，方案与进度见 [`docs/merge-plan.md`](./docs/merge-plan.md)。
+> 项目自洽化改造进行中。方案与进度记录在**源码仓库**的 `docs/merge-plan.md` ——
+> `docs/` 是项目文档、**不属于技能载荷**，所以安装副本（`~/.agents/`）里没有这个目录。
 > 本节只记录**已经落到 `main`** 的内容。**尚未打标签** —— v3.7.0 将在 Phase F 统一发布。
 
 ### Added — `scripts/mtp_graft.py`：通用 MTP head 嫁接套件
