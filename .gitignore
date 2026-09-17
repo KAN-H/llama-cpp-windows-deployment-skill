@@ -4,3 +4,14 @@ __pycache__/
 
 # Local / editor
 .vscode/
+
+# GitNexus local tooling artifacts (machine-specific, go stale with the index)
+AGENTS.md
+CLAUDE.md
+.claude/
+.gitnexus/
+
+# Raw Copilot session transcript captured for the MTP graft package.
+# It contains the full tool-call log for this machine, so it stays local:
+# the sanitised extract lives in 01-retrospective/ instead.
+scripts/mtp-graft-package/05-raw-transcript/
