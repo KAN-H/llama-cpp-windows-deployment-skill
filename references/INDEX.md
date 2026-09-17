@@ -128,10 +128,12 @@ references/
 
 > 计划文档里每个数字都由这些脚本产出。**它们是可复现性的来源，不要删。**
 > 测量输出（`plan/_*.json`、`plan/_*.png`）已 gitignore。
+>
+> ⚠️ **MTP head 嫁接已迁入项目内** —— 用 [`../scripts/mtp_graft.py`](../scripts/mtp_graft.py)，
+> **不要再用 `plan/_mtp_graft.py`**（它 `import update_launchers`，脱离 `launcher\` 即报错，已废弃）。
 
 | 脚本 | 用途 |
 |---|---|
-| `plan/_mtp_graft.py` | MTP head 嫁接（`--check` / `--go --out`） |
 | `plan/_mtp_verify.py` | 嫁接 A/B 验证（baseline vs `--spec-type draft-mtp`） |
 | `plan/_ub_probe.py` | batch / ubatch 探针（必须成对改） |
 | `plan/_phase2_loadprobe.py` | 加载探针（`--ncmoe` / `--ctx` / `--fittarget`） |
@@ -139,12 +141,24 @@ references/
 | `plan/_refactor2_body_probe.py` | 启动块 argv 逐字段校验 |
 | `plan/_install_graft.py` | 嫁接产物落地（新目录 + mmproj + override） |
 
+### 5.6 项目内工具（随技能发布，**无外部依赖**）
+
+| 路径 | 用途 |
+|---|---|
+| [`scripts/mtp_graft.py`](../scripts/mtp_graft.py) | **MTP head 嫁接的权威实现**：`--check` 只读 / `--go --out` 写入 + 写后自检 / `--audit` 列 per-layer KV 数组 |
+| [`scripts/detect.ps1`](../scripts/detect.ps1) | Windows 环境自检（GPU / 驱动 / VRAM / 模型 / 服务） |
+| [`scripts/detect.py`](../scripts/detect.py) | 同上，跨平台 Python 版 |
+| [`scripts/tests/test_mtp_graft.py`](../scripts/tests/test_mtp_graft.py) | 嫁接闸门测试（17 例：1 正向 + 16 负向；不需真模型，亚秒完成） |
+
+> 本节的路径是 §5 里**唯一不指向 `<llama-cpp-dir>`** 的一组 —— 它们随技能本身发布，换台机器照常工作。
+
 ---
 
 ## 6. 已废弃 / 已归档路径
 
 | 路径 | 状态 | 替代 |
 |---|---|---|
+| `plan/_mtp_graft.py` | ❌ **已废弃** | 迁入项目内为 [`../scripts/mtp_graft.py`](../scripts/mtp_graft.py)（自包含、12 条闸门、按 block 区间识别头、支持多块头与 per-layer KV 审计）。旧脚本依赖 `launcher/update_launchers.py` 的 `GGML_TYPE_BYTES` / `read_gguf_tensors` |
 | `generate_ini.bat` | ❌ **不存在** | 功能已并入 `launcher/update_launchers.py`（TASK-039 归档完成） |
 | `<llama-cpp-dir>/launcher-models.json` | ❌ 位置错误 | `launcher/launcher-models.json` |
 | `<llama-cpp-dir>/update-launchers.bat` | ❌ 位置错误 | `launcher/update-launchers.bat` |

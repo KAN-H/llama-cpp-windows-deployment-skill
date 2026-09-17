@@ -2,6 +2,48 @@
 
 llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）版本变更记录。
 
+## [未发布 — 目标 v3.7.0] - 2026-09-17
+
+> 项目自洽化改造进行中，方案与进度见 [`docs/merge-plan.md`](./docs/merge-plan.md)。
+> 本节只记录**已经落到 `main`** 的内容。**尚未打标签** —— v3.7.0 将在 Phase F 统一发布。
+
+### Added — `scripts/mtp_graft.py`：通用 MTP head 嫁接套件
+首个**不依赖任何项目外目录**的嫁接工具。此前手册引用的 `<llama-cpp-dir>\plan\_mtp_graft.py`
+`import update_launchers`，脱离 `<llama-cpp-dir>\launcher\` 即 `ModuleNotFoundError`，
+而手册却写着「纯标准库，可独立运行」—— **该说法已删除并纠正**。
+
+- **内联**两个原本外部的符号：`GGML_TYPE_BYTES`（34 项，逐条对上游 enum 核过）与
+  `read_gguf_tensors` 的尺寸交叉校验（`size_ok = delta < 1%`）
+- **头识别改为 block index 区间** `[block_count - nextn, block_count)`。
+  按名字过滤会漏掉 `bailingmoe3`（它的头张量用普通后缀 `blk.%d.layer_out_norm`）
+- **支持多块头**（`mimo2`=3、`step35`），并在断言单块的架构上**拒绝**写多块
+- **新 `--audit`**：列出目标模型全部 per-layer 数组 KV（`compress_ratios` / `shared_kv_layers` /
+  `recurrent_layers` / `deepstack_layers` / `layer_types`，外加「长度恰好等于 `block_count`」兜底）。
+  加块会与这些数组失配，此前**完全无人审计**
+- **12 条闸门**（8 结构 + 4 架构建议）：`granite-switch`（复用 `n_layer_nextn` 作 router）与
+  `gemma4-assistant`（头在 `blk.N.*` 之外）直接拒绝；头会被加载但永不执行的架构只警告
+- `--preset qwen36-35b-a3b` 一键复现本次嫁接；`--go` **拒绝覆盖已存在的输出**
+- **新增 `scripts/tests/test_mtp_graft.py`**：17 例（1 正向 + 16 负向），合成夹具亚秒跑完，不需真模型
+
+### Verified — 迁移等价性（逐字节）
+用新工具对 2026-09-13 那次嫁接的**同一对模型**重跑，产物与原工具 **SHA-256 完全相同**：
+`5AF97A49D3CC86866CC9C101C72A584803A6FE3E7DD8C5196DEEE15F7072D272`（22.31 GiB）。
+即改写是**保真等价**，不是「看起来能用」。
+
+### Added — `scripts/mtp-graft-package/`：本次嫁接的完整过程物料
+复盘（含两个 bug 与 `nextn_predict_layers` 的发现过程）、对比分析表、会话导航图、
+四个脚本原始副本、A/B 实测数据、配置链路摘录。**已全量脱敏**（凭据 → 环境变量、
+本机路径 → 占位符、换行 → CRLF），原始转录 gitignore 仅留本机。
+
+### Added — `docs/`：项目文档（非技能载荷）
+`merge-plan.md`（边界、10 条决策、10 条硬伤、阶段与门禁）、`README.md`、Stage 1 门禁报告。
+
+### Fixed — 手册与索引
+- `guides/mtp-head-grafting.md` §7 **重写**：指向 `scripts/mtp_graft.py`，列全 12 条闸门、
+  block 区间识别、per-layer KV 陷阱，并**保留并纠正**原「可独立运行」的错误说法
+- `INDEX.md` 新增 **§5.6 项目内工具**（唯一不指向 `<llama-cpp-dir>` 的路径组）；
+  §5.5 移除 `plan/_mtp_graft.py`；**§6 登记其为已废弃**
+
 ## [v3.6.0] - 2026-09-13
 
 ### Changed — `references/` 目录重整（本次主要变更）
