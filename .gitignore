@@ -4,6 +4,8 @@ __pycache__/
 
 # Local / editor
 .vscode/
+.venv/
+graphify-out/
 
 # GitNexus local tooling artifacts (machine-specific, go stale with the index)
 AGENTS.md
@@ -27,3 +29,10 @@ docs/
 
 # MTP 嫁接考古材料：一次性。含原始会话转录（8.7 MB 工具调用日志）
 scripts/mtp-graft-package/
+
+# 一次性维护脚本与内部 provenance 记录，留在本地
+scripts/launcher_gen/_sanitize_hub.py
+references/sessions/20260917-skill-dev-provenance.md
+
+# Generated launcher state and backups
+scripts/launcher_gen/backup/

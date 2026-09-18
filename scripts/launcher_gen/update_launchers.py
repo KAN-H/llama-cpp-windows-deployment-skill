@@ -3,8 +3,8 @@
 """
 update_launchers.py - llama.cpp launcher auto-updater
 ======================================================
-Scans D:\\dev\\models\\chat and keeps these artifacts in sync with the
-models actually present on disk:
+Scans the configured model directory and keeps these artifacts in sync with
+the models actually present on disk:
 
   1. start-CPU-Toolcall-Launcher.bat   (pure ASCII)
   2. start-Gemma4-Launcher.bat         (GBK / cp936, no BOM)

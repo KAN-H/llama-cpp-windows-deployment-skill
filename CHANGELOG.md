@@ -2,10 +2,9 @@
 
 llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）版本变更记录。
 
-## [未发布 — 目标 v3.7.0] - 2026-09-17
+## [v3.7.0] - 2026-09-18
 
-> 项目自洽化改造进行中。方案与进度记录在**维护者本地**的 `docs/merge-plan.md` ——
-> `docs/` 是开发过程材料、**不属于技能载荷**，不在公开仓库里。
+> 本版本的维护过程材料已在维护者本地隔离，不属于技能载荷，也不在公开仓库中。
 > 本节只记录**已经落到 `main`** 的内容。**尚未打标签** —— v3.7.0 将在 Phase F 统一发布。
 
 ### Added — `scripts/mtp_graft.py`：通用 MTP head 嫁接套件
@@ -33,6 +32,7 @@ llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）�
 - `docs/` —— 执行计划、各阶段门禁报告、合并前分析
 - `scripts/mtp-graft-package/` —— 一次性考古材料（复盘、原始脚本副本、A/B 实测数据）
 - `docs/video/` —— 说明动画三件套，已移至项目目录**之外**独立存放
+- 一次性维护脚本与内部 provenance 记录
 - 原始会话转录（自始至终 gitignore）
 
 判定标准只有一句：**换一个用户、换一台机器，它还有用吗？**

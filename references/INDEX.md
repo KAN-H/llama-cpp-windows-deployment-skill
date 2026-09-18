@@ -40,7 +40,7 @@
 | `assets/` | **可运行资源** —— 复制出去就能用 | ✅ 但需保持脱敏 |
 
 > `scripts/` 是技能载荷（随安装副本一起走）。
-> **开发过程材料（`docs/`、`scripts/mtp-graft-package/`）既不在公开仓库、也不在安装副本里** ——
+> 开发过程材料、一次性维护脚本和内部 provenance 记录既不在公开仓库、也不在安装副本里；
 > 它们的归属见 §7「发布边界」。
 
 ---
@@ -57,7 +57,6 @@
 | [`20260816`](./sessions/20260816-session-experience.md) | `--fit` 自动分层（7 倍提速）、新 CPU 模型、GBK 恢复 SOP | 51K 上下文 10.6 → 72-93 t/s 的完整证据链 | 长上下文降速 |
 | [`20260829`](./sessions/20260829-session-experience.md) | Qwen3.8-27B 极限优化、更新器工程修复、WSL/VS Code 对接 | `ECONNREFUSED` 双根因排查 SOP | 配长上下文、VS Code 连不上 |
 | [`20260913`](./sessions/20260913-session-experience.md) | MoE 参数智能化、回归方法论、MTP 嫁接 | **新守卫必须先在已知可用样本上跑**（否则守卫自己成为 bug） | 加模型、写断言、做嫁接 |
-| [`20260917`](./sessions/20260917-skill-dev-provenance.md) | **项目内迁溯源**：生成器/hub 搬进仓库、参数化契约、保真验证 | **要改一个产出过真实产物的工具，先固化它的产物基线** | 想知道 `scripts/launcher_gen/` 从哪来、凭什么信它 |
 
 ---
 
