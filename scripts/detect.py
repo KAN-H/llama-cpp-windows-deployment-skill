@@ -61,7 +61,7 @@ def run(cmd, timeout=90):
 
 
 def check_server(llama_dir):
-    print("[1/6] Checking llama-server ... ", end="")
+    print("[1/7] Checking llama-server ... ", end="")
     svr = Path(llama_dir) / server_name()
     if svr.is_file():
         print("OK FOUND")
@@ -70,11 +70,12 @@ def check_server(llama_dir):
     print("MISSING")
     print(f"      expected: {svr}")
     print("      Please extract a llama.cpp prebuilt package to the correct directory.")
+    print("      Get it (and run the first smoke test) via references/guides/first-time-setup.md")
     return None
 
 
 def check_cuda(binary):
-    print("[2/6] Detecting CUDA arch ... ", end="")
+    print("[2/7] Detecting CUDA arch ... ", end="")
     if not binary:
         print("SKIPPED (llama-server not found)")
         return None
@@ -87,7 +88,7 @@ def check_cuda(binary):
     print(f"OK {arch}")
     if arch == "sm_89":
         print("      WARNING sm_89 = CUDA 12.4 build; Blackwell (RTX 50) needs sm_120")
-        print("      Recommend: download the CUDA 13.3 build (llama-bXXXX-bin-cuda-13.3-x64.zip)")
+        print("      Recommend: download the CUDA 13.3 build (llama-bXXXX-bin-win-cuda-13.3-x64.zip)")
     elif arch == "sm_120":
         print("      OK Blackwell native support")
     else:
@@ -96,7 +97,7 @@ def check_cuda(binary):
 
 
 def check_mtp(binary):
-    print("[3/6] Detecting MTP parameter naming ... ", end="")
+    print("[3/7] Detecting MTP parameter naming ... ", end="")
     if not binary:
         print("SKIPPED (llama-server not found)")
         return None
@@ -128,7 +129,7 @@ def check_mtp(binary):
 
 
 def check_driver():
-    print("[4/6] Detecting NVIDIA driver ... ", end="")
+    print("[4/7] Detecting NVIDIA driver ... ", end="")
     code, out = run(["nvidia-smi", "--query-gpu=driver_version,memory.total", "--format=csv,noheader"])
     if code != 0 or not out.strip():
         print("WARNING nvidia-smi returned no data")
@@ -149,7 +150,7 @@ def check_driver():
 
 
 def scan_models(models_dir):
-    print("[5/6] Scanning model directory ... ", end="")
+    print("[5/7] Scanning model directory ... ", end="")
     md = Path(models_dir)
     if not md.is_dir():
         print("MISSING directory:", md)
@@ -172,7 +173,7 @@ def scan_models(models_dir):
 
 
 def check_vram():
-    print("[6/6] Detecting GPU VRAM ... ", end="")
+    print("[6/7] Detecting GPU VRAM ... ", end="")
     code, out = run(["nvidia-smi", "--query-gpu=memory.free,memory.used,memory.total",
                      "--format=csv,noheader,nounits", "-i", "0"])
     if code != 0 or not out.strip():

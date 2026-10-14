@@ -17,10 +17,10 @@ _sanitize_hub.py       一次性：清除 llama_hub.py 里 3 处硬编码 key（
 
 ## 1. 两个环境变量
 
-| 变量 | 含义 | 默认 |
+| 变量 | 含义 | 解析顺序 |
 |---|---|---|
-| `LAUNCHER_DIR` | **数据目录**：`launcher-models.json`、`preset-overrides.json`、`model-profiles.json`、`backup/`、`docs/` | 本文件所在目录 |
-| `CHAT_DIR` | **模型目录**（扫描对象） | **无** —— 不设就报错退出 2 |
+| `LAUNCHER_DIR` | **数据目录**：`launcher-models.json`、`preset-overrides.json`、`model-profiles.json`、`backup/`、`docs/` | 环境变量 → 本文件所在目录（默认） |
+| `CHAT_DIR` | **模型目录**（扫描对象） | `--chat` → 环境变量 → 注册表里记的 `chat_dir` → **报错退出 2** |
 
 ```powershell
 $env:LAUNCHER_DIR = '<launcher-dir>'
@@ -28,9 +28,14 @@ $env:CHAT_DIR     = '<models-dir>'
 python update_launchers.py --check
 ```
 
-> **为什么 `CHAT_DIR` 没有默认值**：模型目录是机器属性，不是工具属性。
+> **为什么 `CHAT_DIR` 没有内置默认值**：模型目录是机器属性，不是工具属性。
 > 旧版把**模型目录**写死在源码里，于是工具只在这一台机器上说得通。
 > 现在缺参时它会明确告诉你，而不是猜一个路径。
+>
+> **注册表回退不算“猜”**：那是某次 `--extract` 明确给过的值 ——
+> 让**既有部署**不设任何环境变量也能继续运行；**全新机器**（尚无注册表）则
+> 必须给出 `--chat` 或 `CHAT_DIR`，否则报错退出 2。
+> 当前实际解析到的值可用 `llama-hub.bat --paths` 查看。
 >
 > **`LAUNCHER_DIR` 的默认值是"本文件所在目录"**，所以把工具放在 `launcher\` 里
 > 原地运行**行为完全不变** —— 迁移没有破坏任何现有安装。

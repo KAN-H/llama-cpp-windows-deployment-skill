@@ -1,6 +1,6 @@
 # llama.cpp Windows Deployment Skill 🚀
 
-> An AI Agent skill for deploying, optimizing, and managing llama.cpp on Windows — covering Router Mode multi-model routing, Gemma 4 / Qwen / Phi-4 deployment, QAT–MTP inference optimization, GPU VRAM tuning, CPU memory-constrained scenarios, and WSL2 agent integration.
+> An AI Agent skill for deploying, optimizing, and managing llama.cpp on Windows — covering Router Mode multi-model routing, Gemma 4 / Qwen / Phi-4 deployment, QAT–MTP inference optimization, **GSQ-RCO non-uniform quant tuning**, GPU VRAM budgeting, CPU memory-constrained scenarios, and WSL2 agent integration.
 
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
@@ -10,7 +10,7 @@
 
 | File | Description |
 |------|-------------|
-| [`SKILL.md`](./SKILL.md) | Main skill file — activated by Agent on demand (v3.6) |
+| [`SKILL.md`](./SKILL.md) | Main skill file — activated by Agent on demand (v3.8) |
 | **[`references/INDEX.md`](./references/INDEX.md)** | **Quick index** — session logs / guides / assets, plus the **authoritative code-path table** |
 | [`references/assets/gemma4-menu-scripts.bat`](./references/assets/gemma4-menu-scripts.bat) | Full 10-option Gemma 4 launch menu (Q5/Q8, QAT, MTP, 26B-A4B) |
 | [`references/assets/qwen-scripts.bat`](./references/assets/qwen-scripts.bat) | Qwen 3-tier deployment scripts (bare / external draft / built-in MTP) |
@@ -18,7 +18,7 @@
 | [`references/assets/start-CPU-Toolcall-Launcher.bat`](./references/assets/start-CPU-Toolcall-Launcher.bat) | CPU-only tool-calling launcher (`-ngl 0`, 128K ctx, 8-model menu) |
 | [`references/assets/router-mode-preset.bat`](./references/assets/router-mode-preset.bat) | Router Mode launcher — `--models-preset` variant (per-model overrides) |
 | [`references/assets/router-mode-simple.bat`](./references/assets/router-mode-simple.bat) | Router Mode launcher — `--models-dir` simple variant |
-| [`references/assets/model-profiles.json`](./references/assets/model-profiles.json) | Curated model parameter knowledge base (17 profiles, verified levels) |
+| [`references/assets/model-profiles.json`](./references/assets/model-profiles.json) | Curated model parameter knowledge base (18 profiles, 3 with structured `moe` blocks, verified levels) |
 | [`references/sessions/20260803-session-experience.md`](./references/sessions/20260803-session-experience.md) | Benchmark data: Qwen3.6-27B 64K tuning, CPU toolcall, 11/11 tool matrix, BAT encoding |
 | [`references/sessions/20260805-session-experience.md`](./references/sessions/20260805-session-experience.md) | Reasoning control (anti-deadloop, `--reasoning-budget`) & GBK safe editing |
 | [`references/sessions/20260806-session-experience.md`](./references/sessions/20260806-session-experience.md) | 26B MTP draft: official Q8_0 vs third-party Q4_0 diagnosis |
@@ -26,9 +26,16 @@
 | [`references/sessions/20260829-session-experience.md`](./references/sessions/20260829-session-experience.md) | Qwen3.8-27B tuning, long-session validation SOP, updater fixes, WSL/VS Code `ECONNREFUSED` |
 | [`references/guides/20260913-moe-offload-community-research.md`](./references/guides/20260913-moe-offload-community-research.md) | MoE offload: community state of the art, per-layer expert skew, the `-ub` prefill lever |
 | [`references/sessions/20260913-session-experience.md`](./references/sessions/20260913-session-experience.md) | `--fit` ⟂ `--n-cpu-moe`, `-ub` clamping, GGUF tensor-table parsing, regression methodology |
+| [`references/sessions/20261012-qwen38-gsqrco-27b-tuning-report.md`](./references/sessions/20261012-qwen38-gsqrco-27b-tuning-report.md) | **GSQ-RCO 27B full tuning report** + raw data (`_q6_results.json` ×18, `_q6_metadata.json` snapshot) |
+| [`references/guides/first-time-setup.md`](./references/guides/first-time-setup.md) | **First-time setup** — get llama.cpp release (asset selection) → get models (HF/ModelScope) → self-check → first smoke test |
 | [`references/guides/mtp-head-grafting.md`](./references/guides/mtp-head-grafting.md) | **Built-in MTP head grafting** — full GGUF surgery, four traps, verification protocol |
+| [`references/guides/qwen38-gsqrco-27b-tuning.md`](./references/guides/qwen38-gsqrco-27b-tuning.md) | **GSQ-RCO tuning dossier** — KV ladder, the CPU-offload cliff (-48%), final dual profiles |
 | [`scripts/detect.ps1`](./scripts/detect.ps1) | Automated environment diagnostics (PowerShell) |
 | [`scripts/detect.py`](./scripts/detect.py) | Cross-platform diagnostics (Python 3.7+, Windows/Linux/macOS) |
+| [`scripts/launcher_gen/`](./scripts/launcher_gen/README.md) | **Launcher ecosystem generator** — scans models, renders 3 menu `.bat` launchers + `models-config.ini`; portable via `LAUNCHER_DIR` / `CHAT_DIR` |
+| [`scripts/mtp_graft.py`](./scripts/mtp_graft.py) | MTP head grafting tool — self-contained GGUF surgery with 12 gates (`--check` / `--go` / `--audit`) |
+| [`scripts/q6-tuning/`](./scripts/q6-tuning/README.md) | **Q6 probe set** — metadata / single-config probe / multi-turn / apply / regression gates (portable) |
+| [`scripts/tests/test_mtp_graft.py`](./scripts/tests/test_mtp_graft.py) | Grafting gate tests — 17 cases (1 positive + 16 negative), sub-second, no real model needed |
 
 ## 🎯 When to Use
 
@@ -37,6 +44,7 @@
 - Optimizing **GPU inference** (RTX 5060 Ti 16GB / Blackwell)
 - Running models in **CPU-only** memory-constrained environments
 - Setting up **MTP speculative decoding** (Gemma 4 / Qwen3.6)
+- Tuning **GSQ-RCO non-uniform quant** models (dense + MTP, incl. the CPU-offload cliff)
 - Migrating between **Gemma 4 ↔ Qwen** model families
 - Troubleshooting **OOM**, connection issues, or parameter mismatches
 
@@ -67,9 +75,10 @@ Or run the diagnostics script first:
 
 ## 📖 Agent Integration
 
-This skill is designed as a **VS Code Agent Skill** (`.github/skills/<name>/SKILL.md`). Place it in your project's skill directory, and the Agent will auto-discover it for relevant tasks.
+This skill is designed as an **AI Agent skill** (VS Code / GitHub Copilot). Install it into your agent's skill directory and it will be auto-discovered for relevant tasks.
 
-**Place at**: `.github/skills/llama-cpp-windows-deployment/SKILL.md`
+**User-level (recommended)**: `~\.agents\skills\llama-cpp-windows-deployment\SKILL.md`
+**Project-level (if your setup supports project skills)**: `.github/skills/llama-cpp-windows-deployment/SKILL.md`
 
 ## 🏷️ Topics
 

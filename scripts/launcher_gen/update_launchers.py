@@ -60,12 +60,37 @@ BASE = Path(os.environ.get("LAUNCHER_DIR") or Path(__file__).resolve().parent).r
 # path is a property of the machine, not of this tool. Set CHAT_DIR or pass
 # --chat, and the tool says so plainly instead of guessing at one layout.
 _ENV_CHAT = os.environ.get("CHAT_DIR")
-DEFAULT_CHAT = Path(_ENV_CHAT) if _ENV_CHAT else None
 
 MTP_DIR_NAME = "gemma4_mtp"
 REGISTRY = BASE / "launcher-models.json"
 BACKUP = BASE / "backup"
 PREVIEW_DIR = BACKUP / "preview"
+
+
+def resolve_chat(cli_value=None):
+    """The models dir: --chat > CHAT_DIR > the registry's remembered chat_dir.
+
+    The registry fallback is not a guess: it is the value an earlier --extract
+    was given, and it lets an existing install keep running without new
+    configuration. Returns None when nothing answers - main() turns that into
+    an ap.error (exit 2); --paths reports it in place.
+    """
+    if cli_value:
+        return Path(cli_value)
+    if _ENV_CHAT:
+        return Path(_ENV_CHAT)
+    try:
+        remembered = json.loads(
+            REGISTRY.read_text(encoding="utf-8")).get("chat_dir")
+    except Exception:
+        remembered = None
+    return Path(remembered) if remembered else None
+
+
+# The resolved default chat dir (CHAT_DIR > the registry's remembered
+# chat_dir), or None. Kept under its historical name for existing callers
+# (llama_hub); new code should call resolve_chat().
+DEFAULT_CHAT = resolve_chat()
 
 SPECS = {
     "gemma4": ("start-Gemma4-Launcher.bat", "gbk"),
@@ -1313,10 +1338,17 @@ def make_auto(launcher, reldir, files, mtp_files, taken_names, profiles=None,
     taken_names |= {vmain, vmm, vdraft}
 
     rel_os = reldir.replace("/", os.sep)
+    # FND-070: the body references %<vmm>% (mmseg / common_checks) but the variable
+    # DEFINITION was never emitted - every auto entry whose dir carries an mmproj
+    # (Q5 35B, Q6 27B GSQ-RCO) failed :check_file with an empty path and could not
+    # start at all. Emit it here, where the name is minted, right after vmain.
+    vars_ = ['set "{}={}\\{}"'.format(vmain, "%CHAT%", rel_os + os.sep + main)]
+    if mm:
+        vars_.append('set "{}={}\\{}"'.format(vmm, "%CHAT%", rel_os + os.sep + mm))
     groups = [{
         "t": "group",
         "comments": ["REM --- [NEW] {} ---".format(stem)],
-        "vars": ['set "{}={}\\{}"'.format(vmain, "%CHAT%", rel_os + os.sep + main)],
+        "vars": vars_,
     }]
     entries = []
     goto = "RUN_" + sanit + str(i) if False else "RUN_" + sanit
@@ -1422,10 +1454,10 @@ def make_auto(launcher, reldir, files, mtp_files, taken_names, profiles=None,
                          "  --min-p 0.0 ^\n"
                          "  --presence-penalty 0.0 ^\n"
                          "  --repeat-penalty 1.0 ^\n"
-                         "  --ubatch-size 512 ^\n"
+                         "  --ubatch-size 256 ^\n"
                          '  --chat-template-kwargs "{\\"reasoning_effort\\":\\"medium\\"}" ^\n'
                          "  --metrics ^")
-                mmap_seg = "  --load-mode mmap ^"
+                mmap_seg = "  --load-mode none ^"
             else:
                 ngl = "48"
                 temp, top_p, top_k, timeout = (
@@ -1433,7 +1465,12 @@ def make_auto(launcher, reldir, files, mtp_files, taken_names, profiles=None,
                     prof_samp.get("top_k", 20), "300")
                 extra = "  --reasoning-preserve ^"
                 mmap_seg = "  --load-mode none ^"
-            mtp_seg = ("  -fit off ^\n  --spec-type draft-mtp ^\n"
+            # FND-071: this segment used to carry `  -fit off ^` (a leftover from
+            # the 64K/manual-ngl sibling branch). On the qwen3.8 path it lands
+            # AFTER the `--fit on` emitted by layer_seg, and the last flag wins -
+            # so fit was silently turned OFF with no -ngl set anywhere, i.e. the
+            # menu item ran CPU-only. Keep the spec flags, drop the override.
+            mtp_seg = ("  --spec-type draft-mtp ^\n"
                        "  --spec-draft-n-max %MTP_N_MAX% ^\n"
                        "  --spec-draft-p-min 0.75 ^") if is_mtp else ""
         else:
@@ -2460,7 +2497,11 @@ def gen_ini_v2(dirs, mtp_files, chat, overrides=None, existing=None):
         out.append("[{}]".format(sid))
         out.append("model = {}".format(str(Path(chat) / rel / main)))
         mml = dirs[rel].get("mmproj") or []
-        if mml:
+        # no_mmproj: opt-out for text-first router sections - the vision tower
+        # costs +888 MiB and pushes a 141K/full-GPU dense model over the edge
+        # (measured 2.9 t/s fallback vs 28 t/s without it). Menu entries are
+        # unaffected; the mmproj= section key is simply not emitted.
+        if mml and not e.get("no_mmproj"):
             out.append("mmproj = {}".format(str(Path(chat) / rel / mml[0])))
         # NOTE: llama-server keeps only ONE `alias` line per section - several
         # `alias = x` lines overwrite each other. Always emit a single
@@ -2490,7 +2531,7 @@ def gen_ini_v2(dirs, mtp_files, chat, overrides=None, existing=None):
                 sid, os.path.basename(draft)))
             out.append("[{}]".format(mid))
             out.append("model = {}".format(str(Path(chat) / rel / main)))
-            if mml:
+            if mml and not e.get("no_mmproj"):
                 out.append("mmproj = {}".format(
                     str(Path(chat) / rel / mml[0])))
             out.append("spec-type = draft-mtp")
@@ -3371,10 +3412,11 @@ def main():
                          "repairs stale --n-cpu-moe values and strips the "
                          "decorative --fit/--fit-ctx that cannot run next to "
                          "--n-cpu-moe (FND-064/FND-066)")
-    ap.add_argument("--chat", default=(str(DEFAULT_CHAT) if DEFAULT_CHAT else None),
-                    help="models directory; also read from the CHAT_DIR environment "
-                         "variable. No built-in default on purpose - the models "
-                         "path belongs to the machine, not to this tool.")
+    ap.add_argument("--chat", default=None, metavar="DIR",
+                    help="models directory (default: CHAT_DIR env, else the "
+                         "registry's stored chat_dir). No built-in default on "
+                         "purpose - the models path belongs to the machine, "
+                         "not to this tool.")
     ap.add_argument("--derive-params", action="store_true",
                     help="create/fill preset-overrides.json entries for every "
                          "model on disk (never overwrites existing values)")
@@ -3438,11 +3480,7 @@ def main():
         except Exception:
             pass
 
-    if not args.chat:
-        ap.error("no models directory. Pass --chat <models-dir>, or set the "
-                 "CHAT_DIR environment variable. There is no built-in default: "
-                 "the models path belongs to the machine, not to this tool.")
-    chat = Path(args.chat)
+    chat = resolve_chat(args.chat)
 
     if args.paths:
         exe = find_server_exe()
@@ -3461,7 +3499,9 @@ def main():
         log("  backup / preview     : {}  /  {}".format(BACKUP, PREVIEW_DIR))
         log("  key cache            : {}  exists={}".format(
             KEYS_CACHE, KEYS_CACHE.exists()))
-        log("  chat (models)        : {}  exists={}".format(chat, chat.exists()))
+        log("  chat (models)        : {}  exists={}".format(
+            chat if chat else "NOT SET (--chat / CHAT_DIR / registry)",
+            chat.exists() if chat else False))
         log("  llama-server.exe     : {}".format(
             exe if exe else "NOT FOUND"))
         log("  llama-bench.exe      : {}".format(
@@ -3473,6 +3513,13 @@ def main():
             log("  launcher {:<7}     : {}  exists={}".format(
                 name, p, p.exists()))
         return
+
+    if chat is None:
+        ap.error("no models directory. Pass --chat <models-dir>, set the "
+                 "CHAT_DIR environment variable, or run --extract once with "
+                 "either so the registry remembers it. There is no baked-in "
+                 "default: the models path belongs to the machine, not to "
+                 "this tool.")
 
     if args.extract:
         reg = {

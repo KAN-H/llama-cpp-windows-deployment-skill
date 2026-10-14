@@ -33,9 +33,9 @@ Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
 # --------------------------------------------------
-# [1/6] llama-server.exe 存在性检查
+# [1/7] llama-server.exe 存在性检查
 # --------------------------------------------------
-Write-Host "[1/6] 检查 llama-server.exe ... " -NoNewline
+Write-Host "[1/7] 检查 llama-server.exe ... " -NoNewline
 $svr = Join-Path $llamaDir "llama-server.exe"
 if (Test-Path $svr) {
     $svrVersion = (Get-Item $svr).VersionInfo.FileVersionRaw
@@ -46,14 +46,14 @@ if (Test-Path $svr) {
 } else {
     Write-Host "❌ 未找到" -ForegroundColor Red
     Write-Host "      期望路径: $svr"
-    Write-Host "      请确认 llama.cpp 预编译包已解压到正确目录"
+    Write-Host "      请确认 llama.cpp 预编译包已解压到正确目录（获取与解压验证见 references/guides/first-time-setup.md）"
     $results["llama-server"] = "Missing"
 }
 
 # --------------------------------------------------
-# [2/6] CUDA 架构指纹检测
+# [2/7] CUDA 架构指纹检测
 # --------------------------------------------------
-Write-Host "[2/6] 检测 CUDA 架构 ... " -NoNewline
+Write-Host "[2/7] 检测 CUDA 架构 ... " -NoNewline
 if (Test-Path $svr) {
     $help = & $svr --help 2>&1 | Out-String
     if ($help -match "sm_\d+") {
@@ -81,9 +81,9 @@ if (Test-Path $svr) {
 }
 
 # --------------------------------------------------
-# [3/6] MTP 参数指纹识别
+# [3/7] MTP 参数指纹识别
 # --------------------------------------------------
-Write-Host "[3/6] 检测 MTP 参数命名规范 ... " -NoNewline
+Write-Host "[3/7] 检测 MTP 参数命名规范 ... " -NoNewline
 if (Test-Path $svr) {
     $help = & $svr --help 2>&1 | Out-String
     
@@ -130,9 +130,9 @@ if (Test-Path $svr) {
 }
 
 # --------------------------------------------------
-# [4/6] NVIDIA 驱动版本检测
+# [4/7] NVIDIA 驱动版本检测
 # --------------------------------------------------
-Write-Host "[4/6] 检测 NVIDIA 驱动 ... " -NoNewline
+Write-Host "[4/7] 检测 NVIDIA 驱动 ... " -NoNewline
 try {
     $nvidia = nvidia-smi --query-gpu=driver_version,memory.total --format=csv,noheader 2>$null
     if ($nvidia) {
@@ -159,9 +159,9 @@ try {
 }
 
 # --------------------------------------------------
-# [5/6] 模型目录扫描
+# [5/7] 模型目录扫描
 # --------------------------------------------------
-Write-Host "[5/6] 扫描模型目录 ... " -NoNewline
+Write-Host "[5/7] 扫描模型目录 ... " -NoNewline
 if (Test-Path $modelsDir) {
     $ggufFiles = Get-ChildItem $modelsDir -Recurse -Filter *.gguf -ErrorAction SilentlyContinue
     $ggufCount = $ggufFiles.Count
@@ -189,9 +189,9 @@ if (Test-Path $modelsDir) {
 }
 
 # --------------------------------------------------
-# [6/6] GPU 显存状态（仅 GPU 场景）
+# [6/7] GPU 显存状态（仅 GPU 场景）
 # --------------------------------------------------
-Write-Host "[6/6] 检测 GPU 显存状态 ... " -NoNewline
+Write-Host "[6/7] 检测 GPU 显存状态 ... " -NoNewline
 try {
     $vramInfo = nvidia-smi --query-gpu=memory.free,memory.used,memory.total --format=csv,noheader,nounits -i 0 2>$null
     if ($vramInfo) {

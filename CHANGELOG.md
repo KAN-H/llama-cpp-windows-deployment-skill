@@ -2,6 +2,55 @@
 
 llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）版本变更记录。
 
+## [v3.8.0] - 2026-10-14
+
+> 本节记录 v3.8.0 发布批次的内容（工作树已就绪，**尚未打标签** —— 打标签与 Release 在发布步骤统一执行）。
+
+### Added — Q6 批次入库：Qwen3.8-27B GSQ-RCO 调优资产（2026-10-12 实测）
+- **新增 `scripts/q6-tuning/` 探针集（6 脚本 + README）**：
+  `_q6_metadata.py`（Phase 0 GGUF 元数据基线）、`_q6_probe.py`（Phase 2 单配置端到端测量）、
+  `_q6_multiturn.py`（长 agent 3 轮前缀缓存）、`_q6_apply.py`（Phase 3 测量值回写，写前备份）、
+  `_refactor2_body_probe.py`（cmd.exe 实收 argv vs 文件书写）、`_refactor2_regression.py`（回归断言 A–E）
+- **六脚本全面可移植化**：统一解析链 `LLAMA_DIR`（缺省=脚本上一级）→ `LAUNCHER_DIR` →
+  `CHAT_DIR`（无值回退注册表 `chat_dir`，再回退 `<models-dir>` 占位符并给出提示）；key 走 `LLAMA_API_KEY`；
+  不再假设脚本位于 `<llama-cpp-dir>\plan\`
+- **新增 `references/guides/qwen38-gsqrco-27b-tuning.md`**：16GB 实机调优档案（KV 阶梯 / batch 对比 /
+  显存方程 / **CPU 参与断崖 -48%** / 双档定档 / 复现探针）
+- **新增 `references/guides/first-time-setup.md`**：从零首次部署链路（预编译包获取与资产选择 /
+  模型获取 HF·ModelScope / 环境自检 / 首次冒烟 / 六类陷阱 / 验证协议）
+- **新增 `references/sessions/20261012-qwen38-gsqrco-27b-tuning-report.md`** + 原始数据：
+  `_q6_results.json`（18 条实测记录）、`_q6_metadata.json`（入库时脱敏的快照）
+- **SKILL.md §四 Step 3 新增 3G**（GSQ-RCO 专项入口：定档参数、双档对照、风险提示）+ §一 触发词行
+  （"GSQ-RCO" / "非均匀量化" / "IQ3_S" / "全层 GPU" / "CPU 卸载断崖"）
+
+### Changed — 启动器生成器参数化契约恢复与增强（`scripts/launcher_gen/`）
+- `update_launchers.py` 恢复并增强四级解析链：`--chat` > `CHAT_DIR` > 注册表 `chat_dir` > 明确报错（退出 2）；
+  补实现 `LAUNCHER_DIR` env；冷启动守卫（指向 README 的友好报错）；`DEFAULT_CHAT` 保留为解析后的兼容别名；
+  `--paths` 对未解析值容错显示
+- 新增 `no_mmproj` 支持（条目标记后其启动体不引用 mmproj）
+- `scripts/launcher_gen/README.md §1` 与 `SKILL.md §6A` 同步记录解析链
+
+### Security — 凭据清理（提交前暂存集扫描）
+- `scripts/q6-tuning/` 三个脚本内的真实 key → `LLAMA_API_KEY` 环境变量（默认 `sk-local-001`）
+- `20261012` 报告 2 处 key → 中性表述；`_refactor2_regression.py` 的 FND-021 检查改为
+  **从注册表动态取共享 key**（不再硬编码任何值）
+
+### Fixed — 脚本
+- `_refactor2_body_probe.py`：修正过期用法说明（文中 `<script> <LABEL>` 位置参数实际不存在）；
+  实测 12 个启动块全部存活（技能仓 + `LLAMA_DIR` / plan 默认布局双向验证）
+- `_refactor2_regression.py`：`--self-test` 10/10；`--strict` 全绿（3 启动器 / 14 条目）
+- `detect.py` / `detect.ps1`：sm_89 提示的资产名补 `win`（`llama-bXXXX-bin-win-cuda-13.3-x64.zip`，两版一致）；
+  节号标签统一为 `[N/7]`（前六节原为 `/6`，与第七节 `/7` 基准不一致）
+
+### Docs — 索引、边界与路径对账
+- `references/INDEX.md`：§1 目录树 + §2（`20261012` 行 + 原始数据注）+ §5A（q6-tuning 7 行）+
+  §5B.5（迁移注记：plan 副本 = 血缘现场）全面对账；**§5B 新增「读者须知」（地图≠收录）**；
+  **§7 新增「不存在推送时脱敏」明文**（脱敏只能发生在写入时；数据产物以"入库时脱敏快照"形式收录）
+- `references/guides/qwen38-gsqrco-27b-tuning.md`：8 处 `plan/` 引用更新为现行路径；实测组数 15 → 18
+- `references/INDEX.md` §2 命名约定放宽：专题报告体 `YYYYMMDD-<主题>-report.md` 亦属会话经验类
+- `README.md` 刷新：版本行 v3.8、18 个 profile（3 个 `moe` 块）、安装路径更正为 `~\.agents\skills\…`（用户级），补齐 launcher_gen / mtp_graft / q6-tuning / 新 guide 与报告条目
+- `SKILL.md` §四 新增 **Step 0：环境准备** 首次部署入口（§2.2 同步指路）；`detect.ps1` / `detect.py` 的缺件提示指向 `references/guides/first-time-setup.md`
+
 ## [v3.7.0] - 2026-09-18
 
 > 本版本的维护过程材料已在维护者本地隔离，不属于技能载荷，也不在公开仓库中。
