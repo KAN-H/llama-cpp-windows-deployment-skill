@@ -2,6 +2,32 @@
 
 llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）版本变更记录。
 
+## [v3.9.0] - 2026-10-24
+
+### Added — 并发（n_parallel）与统一 KV 池专题
+- **新增 `scripts/np_probe.py`**（脱敏、无外部依赖）：每档独立加载一次服务，按 `c = 1..np`
+  发互不相干的并发请求，记录每流/聚合吞吐、`n_ctx_slot`、`kv_unified`、显存余量、
+  CUDA error / GGML_ASSERT 计数，以及**请求前后质量问答对是否完全一致**。
+- **内置两道显存安全闸**（源自一次真实绿屏，BugCheck `0x00020001`）：
+  `--prior-headroom`（np>1 时若 np=1 实测余量 < `--min-headroom` 则**拒绝启动**）、
+  `--min-headroom`（加载后余量不足则**在发请求前**中止）。
+- **新增 `references/sessions/20261024-concurrency-np-kv-unified-report.md`**：
+  np 阶梯实测（MoE np=1/2/3/4 单流 57.3/56.7/57.3/58.2 t/s）、
+  `--kv-unified` 语义（`-c` 为池子总量，`n_ctx_slot` 恒等于 `-c`）、
+  第二 slot 显存代价实测（+152 ~ +318 MiB）、
+  **np×MTP 耦合导致绿屏的完整证据链**、
+  客户端 `contextWindow` 必须等于服务端 `-c` 的通用教训。
+
+### Changed — SKILL.md
+- 版本行 → v3.9.0；§一 触发词新增「并发 / n_parallel / -np / kv-unified / slot」一行，
+  指向 `references/sessions/20261024-concurrency-np-kv-unified-report.md`。
+
+### Notes — 结论摘要
+- **并发不降单流速度**（MoE 侧 np=1/2/3/4 单流差异全在噪声内）；代价只在满载时每流分摊。
+- **np>1 与 MTP 是耦合参数**：显存余量 < 1 GiB 时二者必须二选一；小模型余量充足则可共存。
+- **耦合参数应做成原子条目**（配置变体），而不是拆散进参数面板让人手工拼。
+- **测速连测 3 次取后两次**：GPU 空闲时 SM 仅 ~195 MHz，首请求只有稳态的 1/3–1/2。
+
 ## [v3.8.0] - 2026-10-14
 
 > 本节记录 v3.8.0 发布批次的内容（工作树已就绪，**尚未打标签** —— 打标签与 Release 在发布步骤统一执行）。
