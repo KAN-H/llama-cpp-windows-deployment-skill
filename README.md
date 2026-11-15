@@ -10,7 +10,7 @@
 
 | File | Description |
 |------|-------------|
-| [`SKILL.md`](./SKILL.md) | Main skill file — activated by Agent on demand (v3.8) |
+| [`SKILL.md`](./SKILL.md) | Main skill file — activated by Agent on demand (v3.11) |
 | **[`references/INDEX.md`](./references/INDEX.md)** | **Quick index** — session logs / guides / assets, plus the **authoritative code-path table** |
 | [`references/assets/gemma4-menu-scripts.bat`](./references/assets/gemma4-menu-scripts.bat) | Full 10-option Gemma 4 launch menu (Q5/Q8, QAT, MTP, 26B-A4B) |
 | [`references/assets/qwen-scripts.bat`](./references/assets/qwen-scripts.bat) | Qwen 3-tier deployment scripts (bare / external draft / built-in MTP) |
@@ -25,13 +25,17 @@
 | [`references/sessions/20260816-session-experience.md`](./references/sessions/20260816-session-experience.md) | `--fit` auto-offload (7x speedup), CPU toolcall new models, GBK recovery SOP |
 | [`references/sessions/20260829-session-experience.md`](./references/sessions/20260829-session-experience.md) | Qwen3.8-27B tuning, long-session validation SOP, updater fixes, WSL/VS Code `ECONNREFUSED` |
 | [`references/guides/20260913-moe-offload-community-research.md`](./references/guides/20260913-moe-offload-community-research.md) | MoE offload: community state of the art, per-layer expert skew, the `-ub` prefill lever |
-| [`references/sessions/20260913-session-experience.md`](./references/sessions/20260913-session-experience.md) | `--fit` ⟂ `--n-cpu-moe`, `-ub` clamping, GGUF tensor-table parsing, regression methodology |
+| [`references/sessions/20260913-session-experience.md`](./references/sessions/20260913-session-experience.md) | `--fit` ⟂ `--n-cpu-moe` (revised 2026-11-15), `-ub` clamping, GGUF tensor-table parsing, regression methodology |
 | [`references/sessions/20261012-qwen38-gsqrco-27b-tuning-report.md`](./references/sessions/20261012-qwen38-gsqrco-27b-tuning-report.md) | **GSQ-RCO 27B full tuning report** + raw data (`_q6_results.json` ×18, `_q6_metadata.json` snapshot) |
+| [`references/sessions/20261115-v1-upgrade-moe-cache-report.md`](./references/sessions/20261115-v1-upgrade-moe-cache-report.md) | **v1.0.0 upgrade + MoE expert cache report** — real gain 0–6.5% (not 2.2×), cache hurts (-31%…-41%), only ~204 MiB headroom at 262K, 34-vs-36 CPU experts cross-over test |
 | [`references/guides/first-time-setup.md`](./references/guides/first-time-setup.md) | **First-time setup** — get llama.cpp release (asset selection) → get models (HF/ModelScope) → self-check → first smoke test |
 | [`references/guides/mtp-head-grafting.md`](./references/guides/mtp-head-grafting.md) | **Built-in MTP head grafting** — full GGUF surgery, four traps, verification protocol |
 | [`references/guides/qwen38-gsqrco-27b-tuning.md`](./references/guides/qwen38-gsqrco-27b-tuning.md) | **GSQ-RCO tuning dossier** — KV ladder, the CPU-offload cliff (-48%), final dual profiles |
+| [`references/guides/version-upgrade-and-vram-budget.md`](./references/guides/version-upgrade-and-vram-budget.md) | **Upgrade & VRAM headroom playbook** — read the `will leave X >= 2129 MiB` fit verdict, 3-tier headroom gate, upgrade acceptance + rollback, interleaved A/B protocol |
 | [`scripts/detect.ps1`](./scripts/detect.ps1) | Automated environment diagnostics (PowerShell) |
 | [`scripts/detect.py`](./scripts/detect.py) | Cross-platform diagnostics (Python 3.7+, Windows/Linux/macOS) |
+| [`scripts/moe_bench.ps1`](./scripts/moe_bench.ps1) | **Isolated MoE benchmark harness** — short / 12K-long (prefill + prefix-cache reuse + answer + image) / tool-call modes; prints the fit verdict; four resource gates, stops only its own PID |
+| [`scripts/router_args_probe.ps1`](./scripts/router_args_probe.ps1) | **Effective-args probe** — ask a running Router what `--parallel` / `--n-cpu-moe` it actually rendered (CLI overrides presets); redacts api keys, read-only |
 | [`scripts/launcher_gen/`](./scripts/launcher_gen/README.md) | **Launcher ecosystem generator** — scans models, renders 3 menu `.bat` launchers + `models-config.ini`; portable via `LAUNCHER_DIR` / `CHAT_DIR` |
 | [`scripts/mtp_graft.py`](./scripts/mtp_graft.py) | MTP head grafting tool — self-contained GGUF surgery with 12 gates (`--check` / `--go` / `--audit`) |
 | [`scripts/q6-tuning/`](./scripts/q6-tuning/README.md) | **Q6 probe set** — metadata / single-config probe / multi-turn / apply / regression gates (portable) |

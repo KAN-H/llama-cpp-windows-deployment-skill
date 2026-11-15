@@ -2,6 +2,77 @@
 
 llama.cpp Windows 多模型部署技能（llama-cpp-windows-deployment-skill）版本变更记录。
 
+## [v3.11.0] - 2026-11-15
+
+### Added — 版本升级与 MoE 专家缓存专项
+- **新增 `scripts/moe_bench.ps1`**（PowerShell 5.1/7 兼容、纯 ASCII、四道资源闸）：`short` / `long` /
+  `capabilities` 三模式；`long` 一次跑满「≈12K prefill → 前缀缓存复用 → 答案校验 → 图片」；
+  输出 decode/prefill t/s、`draft acceptance`、显存/内存/提交低谷；`-Fit` 时自动提到 `-lv 5`
+  并把 fit 判决行写进结果（判决行是 TRACE 级，默认看不到）；拒绝覆盖同名结果，只停自己起的 PID。
+- **新增 `scripts/router_args_probe.ps1`**：向运行中的 Router 索要 `/models` 的**渲染后子进程参数**，
+  自动脱敏 api key，只读不 reload —— 回答"ini 里的 `parallel = 3` 到底生效没有"。
+- **新增 `references/sessions/20261115-v1-upgrade-moe-cache-report.md`**：b12274 → v1.0.0/b12359 完整对照
+  （短请求 +6.5%；12.9K prefill 1679.8 → 1685.7 t/s 持平；长上下文 decode 68–77 t/s；
+  前缀缓存命中 12,859/12,863；专家缓存四档全负；262K 余量只剩 204 MiB 的 fit 证据；
+  34 vs 36 层交错受控实验；Router 模式端到端升级验证）。
+- **新增 `references/guides/version-upgrade-and-vram-budget.md`**：适用判定 → 余量体检
+  （`X−2129` 三档判定）→ 升级五步 → 缓存三前提 → 交错 A/B 协议 → 验收 3 条与回滚条件 → 陷阱清单。
+
+### Changed
+- **§5.1 重写**：`--fit` 与 `--n-cpu-moe` **不再表述为"互斥"**。实测 fit 会运行（1.01 s）并输出
+  `will leave 2935 >= 2129 MiB, no changes needed`；早期 A/B"显存一字不差"的真实原因是
+  `no changes needed`，不是没运行。**操作建议保持**（MoE 条目只写 `--n-cpu-moe N`），
+  理由改为"不能证明它在不足时会救你"；并给出判决行判读法。
+- §5.5 表格补 Qwen3.6-35B-A3B @262144 的 34/36 层两行 + 说明为何与"越卸载越慢"不矛盾
+  （短 prompt、接受率 0.486→0.532、长上下文 prefill 反而慢 2%–5.3%）。
+- §5.6 增补 **Router CLI 覆盖 preset** 的源码事实（`preset.merge(base_preset)`）⇒ `parallel` 是死参数。
+- 新增 **§5.7 `--moe-cache-mib`**：三条前提 + 实测表（本类配置保持 `0`）。
+- §八 增 b12274 / b12359(v1.0.0) 两行 + **升级验收 3 条与回滚条件**；§九 增"显存富余""前缀缓存"
+  两条 checklist；Troubleshooting 增 4 行（缓存变慢 / 思考变长空答案 / parallel 不生效 / 升级没变快）。
+- `references/INDEX.md`：§2/§3 增新文档行、§5A 增两个脚本、§6 修正 `--fit` 那一行。
+- 触发词新增「版本升级 / 驱动提速」。
+
+### Fixed
+- **推翻 §5.1 与 INDEX §6 的"fit 从不生效"结论**；按维护规范在
+  `references/sessions/20260913-session-experience.md` 的 FND-066 处加**推翻注记**（保留原始 A/B 数据）。
+- README 与 SKILL 头部版本号对齐 v3.11.0。
+
+### Notes — 结论摘要
+- **2.2× 的前提是显存能空出 ≥10% 专家总量**；16GB 卡实测只剩 204 MiB ⇒ 不可能，也不必加参数。
+- **decode 由 MTP 接受率决定，不由上下文长度决定**（短 prompt 56 t/s vs 长上下文 68–77 t/s）。
+- **prefill 与版本几乎无关**，升级不会改善首字延迟。
+- **Agent 多轮的便宜来自前缀缓存**，不是来自专家缓存。
+
+## [v3.10.0] - 2026-11-04
+
+### Added — 视觉 OCR 与整本 PDF 专项
+- **新增 `scripts/ocr_pdf.py`**（脱敏、仅依赖 pymupdf）：pymupdf 渲染 → 逐页 POST
+  `/v1/chat/completions` → `NNNN.txt` + 合并 md。内置断点续跑、`413/400` 自适应降批、
+  自动识别 OCR 模型、自动探测 `n_ctx`（**Router 模式 `/props` 的 n_ctx 恒为 0**，改读
+  `/v1/models` 的 `meta.n_ctx` / `status.args --ctx-size`）、90 MiB 请求体切分。
+  实测 **≈1.4 s/页**（0.9B OCR 模型，217 tok/s）。
+- **新增 `references/sessions/20261104-glmocr-pdf-100mib-webui-report.md`**：完整的实测证据链
+  ——WebUI 前端 PDF 实现反查（`_Ve(file, scale=1.5)` 逐页 canvas → 全部塞一条请求）、
+  **100 MiB 请求体硬上限**（99 MiB→200 / 100 MiB→413 空 body 0.1 s，router 与子实例同，无 CLI 开关）、
+  **每页 ≈1.3K prompt tokens**（16K ctx 只够 12 页；14 页→400）、561 页扫描书≈215 MiB/730K tokens、
+  错误文案映射（只有 `fetch` TypeError 才显示 "Unable to connect to server"）、复现命令。
+
+### Changed — SKILL.md
+- 版本行 → v3.10.0（llama.cpp 版本带上探到 b11960）。
+- §一 触发词新增「视觉 OCR / 整本 PDF」一行（指向新报告）。
+- §三 新增 **3H：视觉 OCR（GLM-OCR 系）与整本 PDF**——两塔墙数字、报错文案误导、
+  三种正确做法（逐页脚本 / 抬 ctx / MCP 工具化）、GLM-OCR 模型侧参数（glm4 0.9B / ctx_train 131072 /
+  glm4v projector / KV ≈21.8 KiB per token）。
+- 「故障快速排查 30 秒版」新增第 ⑦ 步：WebUI 报无法连接时**先 `/health`** 区分生死。
+- §七 Troubleshooting 新增 4 行：WebUI 整本 PDF 失败 / 413 空 body / `exceed_context_size_error` /
+  改了 Router ini 不生效。
+
+### Notes — 结论摘要
+- **WebUI 的 PDF 支持是「一次性全页」，不是「分页阅读」**，只适合几页的短文档。
+- **超大请求体的失败形态是网络错误而非 413 弹窗**（服务端按 Content-Length 提前拒绝后断连）。
+- **多模态输入要按「每页 token」算预算**，不能按「图片张数」；分辨率差 2–3 倍，token 数也差 2–3 倍。
+- **模型能做 OCR ≠ 能当对话模型**：OCR 模型应注册为**工具**，不要注册成 agent 主模型。
+
 ## [v3.9.0] - 2026-10-24
 
 ### Added — 并发（n_parallel）与统一 KV 池专题
