@@ -19,6 +19,14 @@
 3. **「`--n-cpu-moe N` + `--fit on` 当安全网」这个设计前提不成立** ——
    **MoE 模型没有自动降级兜底，`n-cpu-moe` 设错的后果是 OOM，不是优雅降级。**
 
+> ⚠️ **后被 20261115 修正**：**"fit 从未运行"是误判**。b12274 / v1.0.0 在同一类配置上实测 fit **会运行**
+> （1.01 s）并输出 `projected to use 12236 MiB ... will leave 2935 >= 2129 MiB, no changes needed`；
+> 本节引用的 A/B（显存"一字不差"）恰恰是"fit 运行了、但判定无需调整"的正确表现。
+> **操作结论仍然成立**（MoE 条目只写 `--n-cpu-moe N`、不能当安全网），但理由应改为：
+> **未验证它在投影不足时会不会真的下调**。判决行还能当余量体检指标。
+> 见 [`20261115-v1-upgrade-moe-cache-report.md`](./20261115-v1-upgrade-moe-cache-report.md) §4 与
+> [`../guides/version-upgrade-and-vram-budget.md`](../guides/version-upgrade-and-vram-budget.md)。
+
 > ⚠️ **方法论**：日志里的 fit abort 提示**不是可靠判据**。
 > 26B-A4B 的运行日志里**没有** abort 提示，但 fit 同样无效。
 > **只有 A/B 对拍才算。**（26B @131072：带 fit 10,398 MiB / 39.7 t/s，不带 10,398 MiB / 40.3 t/s —— 显存一字不差。）
